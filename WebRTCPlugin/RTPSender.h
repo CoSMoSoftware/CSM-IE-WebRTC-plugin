@@ -13,7 +13,11 @@
 
 using namespace ATL;
 
-
+interface DECLSPEC_UUID("ddc77b27-2465-4726-9c19-681f3d8d0112") ISenderAccess : public IUnknown
+{
+public:
+	virtual  rtc::scoped_refptr<webrtc::RtpSenderInterface > GetSender() = 0;
+};
 
 // RTPSender
 class ATL_NO_VTABLE RTPSender :
@@ -25,7 +29,8 @@ class ATL_NO_VTABLE RTPSender :
 	public IViewObjectExImpl<RTPSender>,
 	public IOleInPlaceObjectWindowlessImpl<RTPSender>,
 	public CComCoClass<RTPSender, &CLSID_RTPSender>,
-	public CComControl<RTPSender>
+	public CComControl<RTPSender>,
+	public ISenderAccess
 {
 public:
 
@@ -49,6 +54,7 @@ DECLARE_NOT_AGGREGATABLE(RTPSender)
 
 BEGIN_COM_MAP(RTPSender)
 	COM_INTERFACE_ENTRY(IRTPSender)
+	COM_INTERFACE_ENTRY(ISenderAccess)
 	COM_INTERFACE_ENTRY(IDispatch)
 	COM_INTERFACE_ENTRY(IViewObjectEx)
 	COM_INTERFACE_ENTRY(IViewObject2)
@@ -105,6 +111,11 @@ public:
   void Attach(rtc::scoped_refptr<webrtc::RtpSenderInterface > &sender)
   {
     this->sender = sender;
+  }
+
+  rtc::scoped_refptr<webrtc::RtpSenderInterface > GetSender() override
+  {
+	  return this->sender;
   }
 
   STDMETHOD(get_id)(VARIANT* val)

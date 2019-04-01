@@ -25,7 +25,7 @@ STDAPI DllGetClassObject(_In_ REFCLSID rclsid, _In_ REFIID riid, _Outptr_ LPVOID
 // DllRegisterServer - Adds entries to the system registry.
 STDAPI DllRegisterServer(void)
 {
-  return S_OK;
+  //return S_OK;
 	// registers object, typelib and all interfaces in typelib
 	HRESULT hr = _AtlModule.DllRegisterServer();
 	return hr;
