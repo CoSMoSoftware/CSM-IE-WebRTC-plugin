@@ -3,7 +3,7 @@
 #include "WebRTCProxy.h"
 #include "VideoRenderer.h"
 #undef FOURCC
-#include "third_party/libyuv/include/libyuv.h"
+#include "libyuv.h"
 
 
 HRESULT VideoRenderer::FinalConstruct()

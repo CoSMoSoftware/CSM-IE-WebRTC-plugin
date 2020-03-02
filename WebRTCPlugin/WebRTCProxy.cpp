@@ -9,13 +9,15 @@
 #include "MediaStreamTrack.h"
 
 #include "rtc_base/ssladapter.h"
-#include "api/peerconnectioninterface.h"
+#include "api/peer_connection_interface.h"
+#include "api/create_peerconnection_factory.h"
 #include "api/audio_codecs/builtin_audio_decoder_factory.h"
 #include "api/audio_codecs/builtin_audio_encoder_factory.h"
+#include "api/video_codecs/builtin_video_decoder_factory.h"
+#include "api/video_codecs/builtin_video_encoder_factory.h"
 #include "api/test/fakeconstraints.h"
 
 // Normal Device Capture
-#include "media/engine/webrtcvideocapturerfactory.h"
 #include "modules/video_capture/video_capture_factory.h"
 
 bool WebRTCProxy::inited = false;
@@ -33,8 +35,8 @@ HRESULT WebRTCProxy::FinalConstruct()
     rtc::InitializeSSL();
     rtc::InitRandom(rtc::Time());
 
-	signalingThread = std::shared_ptr<rtc::Thread>(rtc::Thread::Create().release());
-	eventThread = std::shared_ptr<rtc::Thread>(rtc::Thread::Create().release());
+	signalingThread         = std::shared_ptr<rtc::Thread>(rtc::Thread::Create().release());
+	eventThread             = std::shared_ptr<rtc::Thread>(rtc::Thread::Create().release());
 	workingAndNetworkThread = std::shared_ptr<rtc::Thread>(rtc::Thread::CreateWithSocketServer().release());
 
 	signalingThread->SetName("signaling_thread", NULL);
@@ -55,13 +57,16 @@ HRESULT WebRTCProxy::FinalConstruct()
   //Create peer connection factory
   peer_connection_factory_ =
     webrtc::CreatePeerConnectionFactory(
-      workingAndNetworkThread.get(),
-      signalingThread.get(),
-      NULL,
+      workingAndNetworkThread.get(),  // network_thread
+      workingAndNetworkThread.get(),  // worker_thread
+      signalingThread.get(),          // signaling_thread
+      NULL,  // AudioDeviceModule
       webrtc::CreateBuiltinAudioEncoderFactory(),
       webrtc::CreateBuiltinAudioDecoderFactory(),
-      NULL,
-      NULL
+      webrtc::CreateBuiltinVideoEncoderFactory(),
+      webrtc::CreateBuiltinVideoDecoderFactory(),
+      NULL,  // audio_mixer
+      NULL   // audio_processing
     ).release();
 
   //Check
@@ -176,10 +181,10 @@ STDMETHODIMP WebRTCProxy::createPeerConnection(VARIANT variant, IUnknown** peerC
   //Create peerconnection object, it will call the AddRef inside as it gets a ref to the observer
   rtc::scoped_refptr<webrtc::PeerConnectionInterface> pci = peer_connection_factory_->CreatePeerConnection(
     configuration,
-    &constraints,
-    NULL,
-    NULL,
-    pc
+    // &constraints,
+    NULL, // allocator
+    NULL, // cert_generator
+    pc    // observer
   );
 
   //Check it was created correctly
@@ -250,11 +255,8 @@ STDMETHODIMP WebRTCProxy::createLocalVideoTrack(VARIANT constraints, IUnknown** 
 
   std::string label;
   std::vector<std::string> device_names;
-  cricket::WebRtcVideoDeviceCapturerFactory factory;
-
-  if (video_capturer_) {
-	  video_capturer_.release();
-  }
+  // cricket::WebRtcVideoDeviceCapturerFactory factory;
+  // std::unique_ptr<cricket::VideoCapturer> videoCapturer;
 
   //Get all video devices info
   std::unique_ptr<webrtc::VideoCaptureModule::DeviceInfo> info(webrtc::VideoCaptureFactory::CreateDeviceInfo());
@@ -265,70 +267,60 @@ STDMETHODIMP WebRTCProxy::createLocalVideoTrack(VARIANT constraints, IUnknown** 
 
   //Get all names for devices
   int num_devices = info->NumberOfDevices();
-  for (int i = 0; i < num_devices; ++i) 
-  {
+  for (int i = 0; i < num_devices; ++i) {
     const uint32_t kSize = 256;
     char name[kSize] = { 0 };
     char id[kSize] = { 0 };
-    if (info->GetDeviceName(i, name, kSize, id, kSize) != -1) 
-      device_names.push_back(name);
+    if (info->GetDeviceName(i, name, kSize, id, kSize) != -1) {
+      //Create source
+      // Source* source = new Source(Source::DEVICE, i, std::string(name), id);
+      // if (source) {
+      //     label = name;  break;
+      // }
+    }
   }
-
-  //Try all 
-	
-	for (const auto& name : device_names)
-	{
-		//Open capturer
-		video_capturer_ = factory.Create(cricket::Device(name, 0));
-		//If done
-		if (video_capturer_)
-		{
-			//Store label
-			label = name;
-			break;
-		}
-	}
-  
   
   //Ensure it is created
-  if (!video_capturer_)
-    return E_UNEXPECTED;
+  // if (!videoCapturer)
+  //  return E_UNEXPECTED;
 
   //Create the video source from capture, note that the video source keeps the std::unique_ptr of the videoCapturer
-  auto videoSource = peer_connection_factory_->CreateVideoSource(video_capturer_.get(), nullptr);
+  // auto videoSource = peer_connection_factory_->CreateVideoSource(videoCapturer.release(), nullptr);
 
   //Ensure it is created
-  if (!videoSource)
-    return E_UNEXPECTED;
+  // if (!videoSource)
+  //   return E_UNEXPECTED;
 
   //Now create the track
-  rtc::scoped_refptr<webrtc::MediaStreamTrackInterface> videoTrack = peer_connection_factory_->CreateVideoTrack("video", videoSource);
+  // rtc::scoped_refptr<webrtc::MediaStreamTrackInterface> videoTrack = peer_connection_factory_->CreateVideoTrack("video", videoSource);
 
   //Ensure it is created
-  if (!videoTrack)
-    return E_UNEXPECTED;
+  // if (!videoTrack)
+  //  return E_UNEXPECTED;
 
   //Create activeX object for media stream track
-  CComObject<MediaStreamTrack>* mediaStreamTrack;
-  HRESULT hresult = CComObject<MediaStreamTrack>::CreateInstance(&mediaStreamTrack);
+  // CComObject<MediaStreamTrack>* mediaStreamTrack;
+  // HRESULT hresult = CComObject<MediaStreamTrack>::CreateInstance(&mediaStreamTrack);
 
-  if (FAILED(hresult))
-    return hresult;
+  // if (FAILED(hresult))
+  //   return hresult;
 
   //Attach to native track
-  mediaStreamTrack->Attach(videoTrack);
+  // mediaStreamTrack->Attach(videoTrack);
 
   //Set device name as label
-  mediaStreamTrack->SetLabel(label);
+  // mediaStreamTrack->SetLabel(label);
 
   //Get Reference to pass it to JS
-  *track = mediaStreamTrack->GetUnknown();
+  // *track = mediaStreamTrack->GetUnknown();
 
   //Add JS reference
-  (*track)->AddRef();
+  // (*track)->AddRef();
 
   //OK
-  return hresult;
+  // return hresult;
+
+  return E_UNEXPECTED;
 }
 
 

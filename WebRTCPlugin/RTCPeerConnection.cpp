@@ -84,10 +84,8 @@ private:
 class FakeMediaStream : public rtc::RefCountedObject<webrtc::MediaStreamInterface>
 {
 public:
-  FakeMediaStream(const std::string &label) :
-    label_(label)
-  {
-  }
+  FakeMediaStream(const std::string &label) : label_(label) {}
+  virtual std::string id() const { return label_; } // NOTE ALEX: double-check
   virtual std::string label() const { return label_; }
   virtual webrtc::AudioTrackVector GetAudioTracks() { return webrtc::AudioTrackVector(); }
   virtual webrtc::VideoTrackVector GetVideoTracks() { return webrtc::VideoTrackVector(); }
@@ -139,7 +137,7 @@ STDMETHODIMP RTCPeerConnection::setConfiguration(VARIANT variant)
     _bstr_t bundlePolicy = obj.GetStringProperty(L"bundlePolicy");
     _bstr_t rtcpMuxPolicy = obj.GetStringProperty(L"rtcpMuxPolicy");
     //_bstr_t peerIdentity      = obj.GetStringProperty(L"peerIdentity");
-    int iceCandidatePoolSize = obj.GetIntegerProperty(L"iceServers");
+    int64_t iceCandidatePoolSize = obj.GetIntegerProperty(L"iceServers");
 
     //If we have them
     if (!iceServers.isNull())
@@ -424,30 +422,23 @@ STDMETHODIMP RTCPeerConnection::addTrack(VARIANT track, VARIANT stream, IUnknown
 
   //libwebrtc only supports adding track to one stream and it only requires the stream label, 
   //so we use a fake object instead of having to wrap the whole media stream 
-  std::vector<webrtc::MediaStreamInterface*> streams;
-  rtc::scoped_refptr<webrtc::MediaStreamInterface> mediaStream;
+  std::vector<std::string> streams;
   std::string label = (char*)_bstr_t(stream);
   //If attaching to a stream
   if (!label.empty())
-  {
-    auto it = localStreams.find(label);
-	  //Check if we already have it
-    if (it == localStreams.end())
-    {
-      //Create new fake stream
-      mediaStream = new FakeMediaStream(label);
-      //Add to list of local streams
-      localStreams[label] = mediaStream;
-    } else {
-      //Get it
-      mediaStream = it->second;
-    }
-    //Add it to list
-    streams.push_back(mediaStream.get());
-  }
+    streams.push_back(label);
   
   //Add track
-  rtc::scoped_refptr<webrtc::RtpSenderInterface > senderInterface = pc->AddTrack(proxy->GetTrack(),streams);
+  auto result = pc->AddTrack(proxy->GetTrack(),streams);
+
+  //Return new object
+  rtc::scoped_refptr<webrtc::RtpSenderInterface > senderInterface;
+  if (result.ok()) {
+    senderInterface = result.value().get();
+  } else {
+    RTC_LOG(LS_ERROR) << result.error().message();
+    return E_UNEXPECTED;
+  }
 
   //Create activeX object for media stream track
   CComObject<RTPSender>* sender;
@@ -631,10 +622,10 @@ void RTCPeerConnection::OnSignalingChange(webrtc::PeerConnectionInterface::Signa
 void RTCPeerConnection::OnAddStream(rtc::scoped_refptr<webrtc::MediaStreamInterface> stream)
 {
 	//Get stream label
-	variant_t label = stream->label().c_str();
+	variant_t label = stream->id().c_str();
 
 	//Add to stream map
-	remoteStreams[stream->label()] = stream;
+	remoteStreams[stream->id()] = stream;
 	
 	DispatchAsync(onaddstream,label);
 }
@@ -642,10 +633,10 @@ void RTCPeerConnection::OnAddStream(rtc::scoped_refptr<webrtc::MediaStreamInterf
 void RTCPeerConnection::OnRemoveStream(rtc::scoped_refptr<webrtc::MediaStreamInterface> stream)
 {
 	//Get stream label
-	variant_t label = stream->label().c_str();
+	variant_t label = stream->id().c_str();
 
 	//Remove from stream map
-	remoteStreams.erase(stream->label());
+	remoteStreams.erase(stream->id());
 
 	DispatchAsync(onremovestream,label);
 }
