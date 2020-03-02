@@ -111,6 +111,7 @@ private:
 
   // WebRTC objects variables
   rtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface>  peer_connection_factory_;
+  std::unique_ptr<cricket::VideoCapturer> video_capturer_;
 
 };
 

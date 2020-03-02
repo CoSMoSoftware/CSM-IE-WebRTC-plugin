@@ -75,6 +75,7 @@ void WebRTCProxy::FinalRelease()
 {
   //Remove factory
   peer_connection_factory_ = nullptr;
+  video_capturer_.release();
 }
 
 STDMETHODIMP WebRTCProxy::createPeerConnection(VARIANT variant, IUnknown** peerConnection)
@@ -250,7 +251,10 @@ STDMETHODIMP WebRTCProxy::createLocalVideoTrack(VARIANT constraints, IUnknown** 
   std::string label;
   std::vector<std::string> device_names;
   cricket::WebRtcVideoDeviceCapturerFactory factory;
-  std::unique_ptr<cricket::VideoCapturer> videoCapturer;
+
+  if (video_capturer_) {
+	  video_capturer_.release();
+  }
 
   //Get all video devices info
   std::unique_ptr<webrtc::VideoCaptureModule::DeviceInfo> info(webrtc::VideoCaptureFactory::CreateDeviceInfo());
@@ -271,25 +275,27 @@ STDMETHODIMP WebRTCProxy::createLocalVideoTrack(VARIANT constraints, IUnknown** 
   }
 
   //Try all 
-  for (const auto& name : device_names) 
-  {
-    //Open capturer
-    videoCapturer = factory.Create(cricket::Device(name, 0));
-    //If done
-    if (videoCapturer)
-    {
-      //Store label
-      label = name;
-      break;
-    }
-  }
+	
+	for (const auto& name : device_names)
+	{
+		//Open capturer
+		video_capturer_ = factory.Create(cricket::Device(name, 0));
+		//If done
+		if (video_capturer_)
+		{
+			//Store label
+			label = name;
+			break;
+		}
+	}
+  
   
   //Ensure it is created
-  if (!videoCapturer)
+  if (!video_capturer_)
     return E_UNEXPECTED;
 
   //Create the video source from capture, note that the video source keeps the std::unique_ptr of the videoCapturer
-  auto videoSource = peer_connection_factory_->CreateVideoSource(videoCapturer.release(), nullptr);
+  auto videoSource = peer_connection_factory_->CreateVideoSource(video_capturer_.get(), nullptr);
 
   //Ensure it is created
   if (!videoSource)

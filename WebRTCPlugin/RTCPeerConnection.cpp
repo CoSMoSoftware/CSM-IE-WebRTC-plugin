@@ -471,9 +471,39 @@ STDMETHODIMP RTCPeerConnection::addTrack(VARIANT track, VARIANT stream, IUnknown
 
 STDMETHODIMP RTCPeerConnection::removeTrack(VARIANT sender)
 {
-  if (!pc)
-    return E_UNEXPECTED;
+	if (!pc)
+		return E_UNEXPECTED;
 
+	//Get dispatch interface
+	if (sender.vt != VT_DISPATCH)
+		return E_INVALIDARG;
+
+	IDispatch* disp = V_DISPATCH(&sender);
+
+	if (!disp)
+		return E_INVALIDARG;
+
+	//Get atl com object from sender.
+	CComPtr<ISenderAccess> proxy;
+	HRESULT hr = disp->QueryInterface(IID_PPV_ARGS(&proxy));
+	if (FAILED(hr))
+		return hr;
+
+	const std::string id = proxy->GetSender()->track()->id();
+	for (auto& p : localStreams) {
+		auto audioTrack = p.second->FindAudioTrack(id);
+		auto videoTrack = p.second->FindVideoTrack(id);
+		
+		if (audioTrack) {
+			p.second->RemoveTrack(audioTrack);
+		}
+
+		if (videoTrack) {
+			p.second->RemoveTrack(videoTrack);
+		}
+	}
+
+	pc->RemoveTrack(proxy->GetSender());
   //Done
   return S_OK;
 }
