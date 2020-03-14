@@ -112,7 +112,7 @@ public:
     this->label = label;
   }
 
-  void Attach(rtc::scoped_refptr<webrtc::MediaStreamTrackInterface> &track)
+  void Attach(rtc::scoped_refptr<webrtc::MediaStreamTrackInterface> track)
   {
     this->track = track;
   }

@@ -1,5 +1,6 @@
 // VideoRenderer.cpp : Implementation of VideoRenderer
 #include "stdafx.h"
+
 #include "WebRTCProxy.h"
 #include "VideoRenderer.h"
 #undef FOURCC

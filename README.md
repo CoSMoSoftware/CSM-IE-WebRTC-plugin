@@ -10,10 +10,13 @@ One need to register the plugin as follows (with administrator rights):
 regsvr32 /i WebRTCPlugin.dll
 ```
 
-You can check if the plugin has been registered correctly, by runnign the following command in IE11 console with ActiveX enabled:
+You can check if the plugin has been registered correctly, by running the following command in IE11 console with ActiveX enabled:
 ```
 WebRTCProxy = new ActiveXObject("Cosmo.WebRTCProxy.1");
 ```
+
+You can debug ActiveX Plugins (with MSVC 2019) this way:
+https://docs.microsoft.com/en-us/visualstudio/debugger/how-to-debug-an-activex-control?view=vs-2019
 
 then on to the [JS shim](https://github.com/CoSMoSoftware/CSM-IE-WebRTC-plugin-shim) 
 
@@ -29,15 +32,13 @@ TODO: Corresponding installer can be found
 [here](https://cosmosoftware.io).
 
 #### libwebrtc Compilation from source
-For those familiar with the GN build system,and already knwo how to build a specific branch head, here are the arguments we pass to the "gn gen" command.
+For those familiar with the GN build system, and already know how to build a specific branch head (m73), here are the arguments we pass to the "gn gen" command.
 
-- target_cpu = "x86"
-- treat_warnings_as_errors=false
-- disable_libfuzzer=true
-- is_win_fastlink=true
-- msvc_use_absolute_paths=true
-- symbol_level=2
-- use_rtti=true
+treat_warnings_as_errors = false
+is_debug = true
+enable_iterator_debugging = true
+target_cpu = "x86"
+use_rtti = true
 
 
 

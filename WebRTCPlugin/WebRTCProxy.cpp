@@ -3,11 +3,14 @@
 #include "stdafx.h"
 #include <atlsafe.h>
 
+// this project
 #include "JSObject.h"
 #include "WebRTCProxy.h"
 #include "RTCPeerConnection.h"
 #include "MediaStreamTrack.h"
+#include "VideoSourceAdapter.h"
 
+// libwebrtc
 #include "rtc_base/ssladapter.h"
 #include "api/peer_connection_interface.h"
 #include "api/create_peerconnection_factory.h"
@@ -253,74 +256,70 @@ STDMETHODIMP WebRTCProxy::createLocalAudioTrack(VARIANT constraints, IUnknown** 
 STDMETHODIMP WebRTCProxy::createLocalVideoTrack(VARIANT constraints, IUnknown** track)
 {
 
-  std::string label;
-  std::vector<std::string> device_names;
-  // cricket::WebRtcVideoDeviceCapturerFactory factory;
-  // std::unique_ptr<cricket::VideoCapturer> videoCapturer;
+  rtc::scoped_refptr<VideoSourceAdapter> videoSourceA
+      = new rtc::RefCountedObject<VideoSourceAdapter>();
 
-  //Get all video devices info
-  std::unique_ptr<webrtc::VideoCaptureModule::DeviceInfo> info(webrtc::VideoCaptureFactory::CreateDeviceInfo());
+  //Ensure it is created
+  if (!videoSourceA)
+      return E_UNEXPECTED;
 
-  //Check there is no error
-  if (!info)
-    return E_UNEXPECTED;
+  //Get info for all devices
+  std::unique_ptr<webrtc::VideoCaptureModule::DeviceInfo>
+      info(webrtc::VideoCaptureFactory::CreateDeviceInfo());
 
-  //Get all names for devices
+  //pick the first valid device
+  Source* source = nullptr;
+  const uint32_t kSize = 1024;
+  char name[kSize] = { 0 };
+  char id[kSize] = { 0 };
   int num_devices = info->NumberOfDevices();
   for (int i = 0; i < num_devices; ++i) {
-    const uint32_t kSize = 256;
-    char name[kSize] = { 0 };
-    char id[kSize] = { 0 };
-    if (info->GetDeviceName(i, name, kSize, id, kSize) != -1) {
-      //Create source
-      // Source* source = new Source(Source::DEVICE, i, std::string(name), id);
-      // if (source) {
-      //     label = name;  break;
-      // }
-    }
+      if (info->GetDeviceName(i, name, kSize, id, kSize) != -1) {
+          // Here i will just take the first valid one arbitrarily
+          source = new Source(Source::DEVICE, i, name, id);
+          break;
+      }
   }
-  
+
+  if (!source)
+      return E_UNEXPECTED;
+
+  if (!videoSourceA->Init(*source))
+      return E_UNEXPECTED;
+
+  webrtc::VideoCaptureCapability requested_cap;
+  if (videoSourceA->Start(requested_cap) == webrtc::MediaSourceInterface::kEnded)
+      return E_UNEXPECTED;
+
+  // Now create the track in libwebrtc
+  auto videoTrack = peer_connection_factory_->CreateVideoTrack(
+      "video-" + std::to_string(source->type), videoSourceA);
+
   //Ensure it is created
-  // if (!videoCapturer)
-  //  return E_UNEXPECTED;
-
-  //Create the video source from capture, note that the video source keeps the std::unique_ptr of the videoCapturer
-  // auto videoSource = peer_connection_factory_->CreateVideoSource(videoCapturer.release(), nullptr);
-
-  //Ensure it is created
-  // if (!videoSource)
-  //   return E_UNEXPECTED;
-
-  //Now create the track
-  // rtc::scoped_refptr<webrtc::MediaStreamTrackInterface> videoTrack = peer_connection_factory_->CreateVideoTrack("video", videoSource);
-
-  //Ensure it is created
-  // if (!videoTrack)
-  //  return E_UNEXPECTED;
+  if (!videoTrack)
+     return E_UNEXPECTED;
 
   //Create activeX object for media stream track
-  // CComObject<MediaStreamTrack>* mediaStreamTrack;
-  // HRESULT hresult = CComObject<MediaStreamTrack>::CreateInstance(&mediaStreamTrack);
+  CComObject<MediaStreamTrack>* mediaStreamTrack;
+  HRESULT hresult = CComObject<MediaStreamTrack>::CreateInstance(&mediaStreamTrack);
 
-  // if (FAILED(hresult))
-  //   return hresult;
+  if (FAILED(hresult))
+      return hresult;
 
   //Attach to native track
-  // mediaStreamTrack->Attach(videoTrack);
+  mediaStreamTrack->Attach(videoTrack);
 
   //Set device name as label
-  // mediaStreamTrack->SetLabel(label);
+  mediaStreamTrack->SetLabel(source->name);
 
   //Get Reference to pass it to JS
-  // *track = mediaStreamTrack->GetUnknown();
+  *track = mediaStreamTrack->GetUnknown();
 
   //Add JS reference
-  // (*track)->AddRef();
+  (*track)->AddRef();
 
   //OK
-  // return hresult;
-
-  return E_UNEXPECTED;
+  return hresult;
 }
 
 

@@ -125,6 +125,7 @@
       <RegisterOutput>true</RegisterOutput>
       <AdditionalDependencies>d3d11.lib;windowscodecs.lib;DXGI.lib;Dmoguids.lib;Msdmo.lib;Secur32.lib;Strmiids.lib;Winmm.lib;webrtc.lib;wmcodecdspuuid.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>C:\Program Files %28x86%29\libwebrtc\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -257,7 +258,10 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="VideoFormat.cpp" />
     <ClCompile Include="VideoRenderer.cpp" />
+    <ClCompile Include="VideoSource.cpp" />
+    <ClCompile Include="VideoSourceAdapter.cpp" />
     <ClCompile Include="WebRTCPlugin.cpp" />
     <ClCompile Include="WebRTCPlugin_i.c">
       <CompileAsManaged Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</CompileAsManaged>
@@ -285,9 +289,13 @@
     <ClInclude Include="Resource.h" />
     <ClInclude Include="RTCPeerConnection.h" />
     <ClInclude Include="RTPSender.h" />
+    <ClInclude Include="Source.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
+    <ClInclude Include="VideoFormat.h" />
     <ClInclude Include="VideoRenderer.h" />
+    <ClInclude Include="VideoSource.h" />
+    <ClInclude Include="VideoSourceAdapter.h" />
     <ClInclude Include="WebRTCPlugin_i.h" />
     <ClInclude Include="WebRTCProxy.h" />
   </ItemGroup>

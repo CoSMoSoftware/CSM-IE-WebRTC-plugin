@@ -2,10 +2,10 @@
 
 
 #include "stdafx.h"
+
 #include "resource.h"
 #include "WebRTCPlugin_i.h"
 #include "dllmain.h"
-
 
 using namespace ATL;
 
