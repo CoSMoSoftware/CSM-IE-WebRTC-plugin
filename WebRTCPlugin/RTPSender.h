@@ -118,12 +118,22 @@ public:
 	  return this->sender;
   }
 
+  //Getters
   STDMETHOD(get_id)(VARIANT* val)
   {
     variant_t id = sender->id().c_str();
     *val = id;
     return S_OK;
   }
+  STDMETHOD(get_track)(IUnknown** track) { return 0;  };
+  STDMETHOD(get_transport)(IUnknown** trans) { return 0; };
+
+  //IRTCPeerConnection.idl
+  STDMETHOD(getCapabilities)(VARIANT  kind, VARIANT* caps) { return 0; };
+  STDMETHOD(setParameters)(VARIANT params)  { return 0; };
+  STDMETHOD(getParameters)(VARIANT* params) { return 0; };
+  STDMETHOD(replaceTrack)(IUnknown** track) { return 0; };
+  STDMETHOD(getStats)(VARIANT* statsReport) { return 0; };
 
 private:
   rtc::scoped_refptr<webrtc::RtpSenderInterface > sender;
