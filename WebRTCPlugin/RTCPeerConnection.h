@@ -141,6 +141,12 @@ public:
   STDMETHOD(put_onremovestream)(            VARIANT handler );
   STDMETHOD(put_ondatachannel)(             VARIANT handler );
 
+  STDMETHOD(getSenders)           (VARIANT* senders);
+  STDMETHOD(getReceivers)         (VARIANT* receivers);
+  STDMETHOD(getTransceivers)      (VARIANT* transceivers);
+
+  STDMETHOD(getStats)             (VARIANT statsCallback, VARIANT selector);
+  
  //webrtc::PeerConnectionObserver
   void OnSignalingChange(webrtc::PeerConnectionInterface::SignalingState new_state) override;
   void OnAddStream(rtc::scoped_refptr<webrtc::MediaStreamInterface> stream) override;

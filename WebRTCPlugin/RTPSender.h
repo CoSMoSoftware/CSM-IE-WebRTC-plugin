@@ -15,22 +15,22 @@ using namespace ATL;
 
 interface DECLSPEC_UUID("ddc77b27-2465-4726-9c19-681f3d8d0112") ISenderAccess : public IUnknown
 {
-public:
-	virtual  rtc::scoped_refptr<webrtc::RtpSenderInterface > GetSender() = 0;
+	public:
+	virtual rtc::scoped_refptr<webrtc::RtpSenderInterface > GetSender() = 0;
 };
 
 // RTPSender
 class ATL_NO_VTABLE RTPSender :
-	public CComObjectRootEx<CComSingleThreadModel>,
-	public IDispatchImpl<IRTPSender, &IID_IRTPSender, &LIBID_WebRTCPluginLib, /*wMajor =*/ 1, /*wMinor =*/ 0>,
-	public IOleControlImpl<RTPSender>,
-	public IOleObjectImpl<RTPSender>,
-	public IOleInPlaceActiveObjectImpl<RTPSender>,
-	public IViewObjectExImpl<RTPSender>,
-	public IOleInPlaceObjectWindowlessImpl<RTPSender>,
-	public CComCoClass<RTPSender, &CLSID_RTPSender>,
-	public CComControl<RTPSender>,
-	public ISenderAccess
+public CComObjectRootEx<CComSingleThreadModel>,
+public IDispatchImpl<IRTPSender, &IID_IRTPSender, &LIBID_WebRTCPluginLib, /*wMajor =*/ 1, /*wMinor =*/ 0>,
+public IOleControlImpl<RTPSender>,
+public IOleObjectImpl<RTPSender>,
+public IOleInPlaceActiveObjectImpl<RTPSender>,
+public IViewObjectExImpl<RTPSender>,
+public IOleInPlaceObjectWindowlessImpl<RTPSender>,
+public CComCoClass<RTPSender, &CLSID_RTPSender>,
+public CComControl<RTPSender>,
+public ISenderAccess
 {
 public:
 
@@ -39,20 +39,20 @@ public:
 	{
 	}
 
-DECLARE_OLEMISC_STATUS(OLEMISC_RECOMPOSEONRESIZE |
-	OLEMISC_INVISIBLEATRUNTIME |
-	OLEMISC_CANTLINKINSIDE |
-	OLEMISC_INSIDEOUT |
-	OLEMISC_ACTIVATEWHENVISIBLE |
-	OLEMISC_SETCLIENTSITEFIRST
-)
+	DECLARE_OLEMISC_STATUS(OLEMISC_RECOMPOSEONRESIZE |
+		OLEMISC_INVISIBLEATRUNTIME |
+		OLEMISC_CANTLINKINSIDE |
+		OLEMISC_INSIDEOUT |
+		OLEMISC_ACTIVATEWHENVISIBLE |
+		OLEMISC_SETCLIENTSITEFIRST
+		)
 
-DECLARE_REGISTRY_RESOURCEID(IDR_RTPSENDER)
+	DECLARE_REGISTRY_RESOURCEID(IDR_RTPSENDER)
 
 
-DECLARE_NOT_AGGREGATABLE(RTPSender)
+	DECLARE_NOT_AGGREGATABLE(RTPSender)
 
-BEGIN_COM_MAP(RTPSender)
+	BEGIN_COM_MAP(RTPSender)
 	COM_INTERFACE_ENTRY(IRTPSender)
 	COM_INTERFACE_ENTRY(ISenderAccess)
 	COM_INTERFACE_ENTRY(IDispatch)
@@ -65,34 +65,34 @@ BEGIN_COM_MAP(RTPSender)
 	COM_INTERFACE_ENTRY(IOleInPlaceActiveObject)
 	COM_INTERFACE_ENTRY(IOleControl)
 	COM_INTERFACE_ENTRY(IOleObject)
-END_COM_MAP()
+	END_COM_MAP()
 
-BEGIN_PROP_MAP(RTPSender)
+	BEGIN_PROP_MAP(RTPSender)
 	PROP_DATA_ENTRY("_cx", m_sizeExtent.cx, VT_UI4)
 	PROP_DATA_ENTRY("_cy", m_sizeExtent.cy, VT_UI4)
 	// Example entries
 	// PROP_ENTRY_TYPE("Property Name", dispid, clsid, vtType)
 	// PROP_PAGE(CLSID_StockColorPage)
-END_PROP_MAP()
+	END_PROP_MAP()
 
 
-BEGIN_MSG_MAP(RTPSender)
+	BEGIN_MSG_MAP(RTPSender)
 	CHAIN_MSG_MAP(CComControl<RTPSender>)
 	DEFAULT_REFLECTION_HANDLER()
-END_MSG_MAP()
-// Handler prototypes:
-//  LRESULT MessageHandler(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
-//  LRESULT CommandHandler(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled);
-//  LRESULT NotifyHandler(int idCtrl, LPNMHDR pnmh, BOOL& bHandled);
+	END_MSG_MAP()
+	// Handler prototypes:
+	//  LRESULT MessageHandler(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
+	//  LRESULT CommandHandler(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled);
+	//  LRESULT NotifyHandler(int idCtrl, LPNMHDR pnmh, BOOL& bHandled);
 
-// IViewObjectEx
+	// IViewObjectEx
 	DECLARE_VIEW_STATUS(0)
 
-// IRTPSender
+	// IRTPSender
 public:
 	HRESULT OnDraw(ATL_DRAWINFO& di)
 	{
-    return S_OK;
+		return S_OK;
 	}
 
 
@@ -105,38 +105,66 @@ public:
 
 	void FinalRelease()
 	{
-    sender = nullptr;
+		sender = nullptr;
 	}
 
-  void Attach(rtc::scoped_refptr<webrtc::RtpSenderInterface > &sender)
-  {
-    this->sender = sender;
-  }
+	void Attach(rtc::scoped_refptr<webrtc::RtpSenderInterface > &sender)
+	{
+		this->sender = sender;
+	}
 
-  rtc::scoped_refptr<webrtc::RtpSenderInterface > GetSender() override
-  {
-	  return this->sender;
-  }
+	rtc::scoped_refptr<webrtc::RtpSenderInterface > GetSender() override
+	{
+		return this->sender;
+	}
 
-  //Getters
-  STDMETHOD(get_id)(VARIANT* val)
-  {
-    variant_t id = sender->id().c_str();
-    *val = id;
-    return S_OK;
-  }
-  STDMETHOD(get_track)(IUnknown** track) { return 0;  };
-  STDMETHOD(get_transport)(IUnknown** trans) { return 0; };
+	//Getters
+	STDMETHOD(get_id)(VARIANT* val)
+	{
+		variant_t id = sender->id().c_str();
+		*val = id;
+		return S_OK;
+	}
 
-  //IRTCPeerConnection.idl
-  STDMETHOD(getCapabilities)(VARIANT  kind, VARIANT* caps) { return 0; };
-  STDMETHOD(setParameters)(VARIANT params)  { return 0; };
-  STDMETHOD(getParameters)(VARIANT* params) { return 0; };
-  STDMETHOD(replaceTrack)(IUnknown** track) { return 0; };
-  STDMETHOD(getStats)(VARIANT* statsReport) { return 0; };
+	STDMETHOD(get_track)(IUnknown** track)
+	{
+		return 0;
+	};
+
+	STDMETHOD(get_transport)(IUnknown** trans)
+	{
+		return 0;
+	};
+
+	//IRTCPeerConnection.idl
+
+	STDMETHOD(getCapabilities)(VARIANT kind, VARIANT* caps)
+	{
+		return 0;
+	};
+
+	STDMETHOD(setParameters)(VARIANT params)
+	{
+		return 0;
+	};
+
+	STDMETHOD(getParameters)(VARIANT* params)
+	{
+		return 0;
+	};
+
+	STDMETHOD(replaceTrack)(IUnknown** track)
+	{
+		return 0;
+	};
+
+	STDMETHOD(getStats)(VARIANT* statsReport)
+	{
+		return 0;
+	};
 
 private:
-  rtc::scoped_refptr<webrtc::RtpSenderInterface > sender;
+	rtc::scoped_refptr<webrtc::RtpSenderInterface > sender;
 };
 
 OBJECT_ENTRY_AUTO(__uuidof(RTPSender), RTPSender)

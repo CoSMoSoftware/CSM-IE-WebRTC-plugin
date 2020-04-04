@@ -20,14 +20,14 @@
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{D4705766-7FE4-443C-8E49-C21C2F182983}</ProjectGuid>
-    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0.18362.0</WindowsTargetPlatformVersion>
     <Keyword>AtlProj</Keyword>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v141</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
@@ -251,7 +251,10 @@
     </ClCompile>
     <ClCompile Include="MediaStreamTrack.cpp" />
     <ClCompile Include="RTCPeerConnection.cpp" />
+    <ClCompile Include="RTPReceiver.cpp" />
     <ClCompile Include="RTPSender.cpp" />
+    <ClCompile Include="RTPTransceiver.cpp" />
+    <ClCompile Include="Source.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
@@ -288,7 +291,9 @@
     <ClInclude Include="MediaStreamTrack.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="RTCPeerConnection.h" />
+    <ClInclude Include="RTPReceiver.h" />
     <ClInclude Include="RTPSender.h" />
+    <ClInclude Include="RTPTransceiver.h" />
     <ClInclude Include="Source.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
@@ -313,7 +318,9 @@
     <None Include="MediaStreamTrack.rgs" />
     <None Include="registry.bin" />
     <None Include="RTCPeerConnection.rgs" />
+    <None Include="RTPReceiver.rgs" />
     <None Include="RTPSender.rgs" />
+    <None Include="RTPTransceiver.rgs" />
     <None Include="VideoRenderer.rgs" />
     <None Include="WebRTCPlugin.def" />
     <None Include="WebRTCPlugin.rgs" />
@@ -326,7 +333,9 @@
     <Image Include="DataChannel.bmp" />
     <Image Include="MediaStreamTrack.bmp" />
     <Image Include="RTCPeerConnection.bmp" />
+    <Image Include="RTPReceiver.bmp" />
     <Image Include="RTPSender.bmp" />
+    <Image Include="RTPTransceiver.bmp" />
     <Image Include="VideoRenderer.bmp" />
     <Image Include="WebRTCProxy.bmp" />
   </ItemGroup>

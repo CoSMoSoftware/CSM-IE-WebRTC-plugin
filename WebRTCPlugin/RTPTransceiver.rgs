@@ -1,0 +1,22 @@
+HKCR
+{
+	NoRemove CLSID
+	{
+		ForceRemove {70c8ce17-8a6d-4e47-bb7d-bf9c65456763} = s 'RTPTransceiver class'
+		{
+			ForceRemove Programmable
+			InprocServer32 = s '%MODULE%'
+			{
+				val ThreadingModel = s 'Apartment'
+			}
+			ForceRemove Control
+			ForceRemove 'ToolboxBitmap32' = s '%MODULE%, 118'
+			MiscStatus = s '0'
+			{
+			    '1' = s '%OLEMISC%'
+			}
+			TypeLib = s '{D4447E9C-3398-4C2A-ADB9-54C57441F477}'
+			Version = s '1.0'
+		}
+	}
+}

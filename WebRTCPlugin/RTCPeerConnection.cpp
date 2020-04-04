@@ -6,7 +6,36 @@
 #include "RTCPeerConnection.h"
 #include "MediaStreamTrack.h"
 #include "RTPSender.h"
+#include "RTPReceiver.h"
+#include "RTPTransceiver.h"
 #include "DataChannel.h"
+
+class GetStatsCallback :
+  public rtc::RefCountedObject<CallbackDispatcher<webrtc::RTCStatsCollectorCallback>>
+{
+public:
+  GetStatsCallback(webrtc::PeerConnectionInterface* pci, std::shared_ptr<rtc::Thread> &thread, VARIANT statsCallback) :
+    pc(pci)
+  {
+    //Set dispatcher thread
+    SetThread(thread);
+    //Marshal callbacks
+    MarshalCallback(stats, statsCallback);
+  }
+
+  virtual ~GetStatsCallback() = default;
+
+  virtual void OnStatsDelivered(const rtc::scoped_refptr<const webrtc::RTCStatsReport>& report)
+  {
+    //Serialize to json and run callback, ugly but easier than having to handle each type independently
+    auto json = report->ToJson();
+    //Call stats callback
+    DispatchAsync(stats, json);
+  }
+private:
+  rtc::scoped_refptr<webrtc::PeerConnectionInterface> pc;
+  Callback stats;
+};
 
 class SetSessionDescriptionCallback: 
   public rtc::RefCountedObject<CallbackDispatcher<webrtc::SetSessionDescriptionObserver>>
@@ -26,13 +55,13 @@ public:
 
   void OnSuccess() override
   {
-	//Call sucess without args
+	  //Call sucess without args
     DispatchAsync(success);
   }
 
   void OnFailure(const std::string& error) override
   {
-	//Call error callback
+	  //Call error callback
     DispatchAsync(failure,error);
   }
 
@@ -1082,5 +1111,147 @@ STDMETHODIMP RTCPeerConnection::get_pendingRemoteDescription(VARIANT* val)
   val->vt = VT_ARRAY | VT_VARIANT;
   val->parray = args.Detach();
 
+  return S_OK;
+}
+
+
+STDMETHODIMP RTCPeerConnection::getSenders(VARIANT* ret)
+{
+  if (!pc)
+    return E_UNEXPECTED;
+  
+  //Get all senders
+  auto senders = pc->GetSenders();
+
+  //Output arrau
+  CComSafeArray<VARIANT> array;
+
+  //For each sender
+  for (auto &senderInterface : senders)
+  {
+    //Create activeX object for sender
+    CComObject<RTPSender>* sender;
+    HRESULT hresult = CComObject<RTPSender>::CreateInstance(&sender);
+
+    if (FAILED(hresult))
+      return hresult;
+
+    //Attach to native object
+    sender->Attach(senderInterface);
+
+    //Get Reference to pass it to JS
+    IUnknown* rtpSender = sender->GetUnknown();
+
+    //Add it
+    array.Add(_variant_t(rtpSender));
+  }
+
+  // Initialize the variant
+  VariantInit(ret);
+  //Set array
+  ret->vt = VT_ARRAY | VT_VARIANT;
+  ret->parray = array.Detach();
+
+  //All ok
+  return S_OK;
+}
+
+STDMETHODIMP RTCPeerConnection::getReceivers(VARIANT* ret)
+{
+  if (!pc)
+    return E_UNEXPECTED;
+
+  //Get all senders
+  auto receivers = pc->GetReceivers();
+
+  //Output arrau
+  CComSafeArray<VARIANT> array;
+
+  //For each sender
+  for (auto &receiverInterface : receivers)
+  {
+    //Create activeX object for sender
+    CComObject<RTPReceiver>* receiver;
+    HRESULT hresult = CComObject<RTPReceiver>::CreateInstance(&receiver);
+
+    if (FAILED(hresult))
+      return hresult;
+
+    //Attach to native object
+    receiver->Attach(receiverInterface);
+
+    //Get Reference to pass it to JS
+    IUnknown* rtpReceiver = receiver->GetUnknown();
+
+    //Add it
+    array.Add(_variant_t(rtpReceiver));
+  }
+
+  // Initialize the variant
+  VariantInit(ret);
+  //Set array
+  ret->vt = VT_ARRAY | VT_VARIANT;
+  ret->parray = array.Detach();
+
+  //All ok
+  return S_OK;
+}
+
+STDMETHODIMP RTCPeerConnection::getTransceivers(VARIANT* ret)
+{
+  if (!pc)
+    return E_UNEXPECTED;
+
+  //Get all senders
+  auto senders = pc->GetSenders();
+
+  //Output arrau
+  CComSafeArray<VARIANT> array;
+
+  //For each sender
+  for (auto &senderInterface : senders)
+  {
+    //Create activeX object for sender
+    CComObject<RTPSender>* sender;
+    HRESULT hresult = CComObject<RTPSender>::CreateInstance(&sender);
+
+    if (FAILED(hresult))
+      return hresult;
+
+    //Attach to native object
+    sender->Attach(senderInterface);
+
+    //Get Reference to pass it to JS
+    IUnknown* rtpSender = sender->GetUnknown();
+
+    //Add it
+    array.Add(_variant_t(rtpSender));
+  }
+
+  // Initialize the variant
+  VariantInit(ret);
+  //Set array
+  ret->vt = VT_ARRAY | VT_VARIANT;
+  ret->parray = array.Detach();
+
+  //All ok
+  return S_OK;
+}
+
+
+STDMETHODIMP RTCPeerConnection::getStats(VARIANT statsCallback, VARIANT selector)
+{
+  if (!pc)
+    return E_UNEXPECTED;
+
+  //Create callback
+  rtc::scoped_refptr<GetStatsCallback> callback = new GetStatsCallback(pc, GetThread(), statsCallback);
+
+  //TODO: manage selector
+
+  //Get stats
+  pc->GetStats(callback);
+
+  //All ok
   return S_OK;
 }

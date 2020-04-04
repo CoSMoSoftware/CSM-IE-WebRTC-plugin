@@ -60,6 +60,11 @@ interface IRTCPeerConnection : IDispatch{
   [propput, id(26)] HRESULT onremovestream(            [in] VARIANT handler );
   [propput, id(27)] HRESULT ondatachannel(             [in] VARIANT handler );
 
+  [id(28), local] HRESULT getSenders      ([out, retval] VARIANT* senders);
+  [id(29), local] HRESULT getReceivers    ([out, retval] VARIANT* receivers);
+  [id(30), local] HRESULT getTransceivers ([out, retval] VARIANT* transceivers);
+
+  [id(31), local] HRESULT getStats        ([in] VARIANT statsCallback, [in] VARIANT selector);
 };
 
 [
@@ -80,24 +85,13 @@ interface IMediaStreamTrack : IDispatch{
 
 [
 	object,
-	uuid(70f34fc7-9915-4676-b7a6-6e0c10d7f158),
-	dual,
-	nonextensible,
-	pointer_default(unique)
-]
-interface IRTPReceiver : IDispatch {
-	[propget, id(1)] HRESULT id([out, retval] VARIANT* val);
-};
-
-[
-	object,
 	uuid(291C777C-0E58-4B9C-96CE-AADCD0945826),
 	dual,
 	nonextensible,
 	pointer_default(unique)
 ]
 interface IRTPSender : IDispatch{
-    [propget, id(1)] HRESULT id(       [out, retval] VARIANT*   val   );
+  [propget, id(1)] HRESULT id(       [out, retval] VARIANT*   val   );
 	[propget, id(2)] HRESULT track(    [out, retval] IUnknown** track );
 	[propget, id(3)] HRESULT transport([out, retval] IUnknown** trans );
 	[id(4), local]   HRESULT getCapabilities([in] VARIANT kind, [out, retval] VARIANT* caps );
@@ -151,6 +145,29 @@ interface IDataChannel : IDispatch
 };
 
 [
+	object,
+	uuid(9a99d2ba-e146-451c-b12e-648a63d382a4),
+	dual,
+	nonextensible,
+	pointer_default(unique)
+]
+interface IRTPTransceiver : IDispatch
+{
+};
+
+[
+	object,
+	uuid(edf2935d-3ba3-412e-b2a6-9627c186e74e),
+	dual,
+	nonextensible,
+	pointer_default(unique)
+]
+interface IRTPReceiver : IDispatch
+{
+  [propget, id(1)] HRESULT id([out, retval] VARIANT*   val);
+};
+
+[
 	uuid(D4447E9C-3398-4C2A-ADB9-54C57441F477),
 	version(1.0),
 ]
@@ -182,14 +199,6 @@ library WebRTCPluginLib
 		[default] interface IMediaStreamTrack;
 	};
 	[
-		uuid(6394e804-fdf9-499b-8ae3-130982e4b8df),
-		control
-	]
-	coclass RTPReceiver
-	{
-		[default] interface IRTPReceiver;
-	};
-	[
 		uuid(C98B209A-7914-466A-BD02-0A4A13E15D83),		
 		control
 	]
@@ -212,6 +221,22 @@ library WebRTCPluginLib
 	coclass DataChannel
 	{
 		[default] interface IDataChannel;
+	};
+	[
+		uuid(70c8ce17-8a6d-4e47-bb7d-bf9c65456763),
+		control
+	]
+	coclass RTPTransceiver
+	{
+		[default] interface IRTPTransceiver;
+	};
+	[
+		uuid(6deaed22-2838-47fe-bc08-a0a976fe85e9),
+		control
+	]
+	coclass RTPReceiver
+	{
+		[default] interface IRTPReceiver;
 	};
 };
 

@@ -58,6 +58,15 @@
     <ClCompile Include="VideoFormat.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Source.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="RTPTransceiver.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="RTPReceiver.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -114,6 +123,12 @@
     <ClInclude Include="VideoSourceAdapter.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="RTPTransceiver.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="RTPReceiver.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="WebRTCPlugin.rc">
@@ -152,6 +167,14 @@
     <None Include="registry.bin">
       <Filter>Resource Files</Filter>
     </None>
+    <None Include="RTPTransceiver.rgs">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="RTPTransceiver.htm" />
+    <None Include="RTPReceiver.rgs">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="RTPReceiver.htm" />
   </ItemGroup>
   <ItemGroup>
     <Midl Include="WebRTCPlugin.idl">
@@ -175,6 +198,12 @@
       <Filter>Resource Files</Filter>
     </Image>
     <Image Include="DataChannel.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="RTPTransceiver.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="RTPReceiver.bmp">
       <Filter>Resource Files</Filter>
     </Image>
   </ItemGroup>
