@@ -11,14 +11,14 @@
 #include "VideoSourceAdapter.h"
 
 // libwebrtc
-#include "rtc_base/ssladapter.h"
+#include "rtc_base/ssl_adapter.h"
 #include "api/peer_connection_interface.h"
 #include "api/create_peerconnection_factory.h"
 #include "api/audio_codecs/builtin_audio_decoder_factory.h"
 #include "api/audio_codecs/builtin_audio_encoder_factory.h"
 #include "api/video_codecs/builtin_video_decoder_factory.h"
 #include "api/video_codecs/builtin_video_encoder_factory.h"
-#include "api/test/fakeconstraints.h"
+// #include "api/test/fake_constraints.h"
 
 // Normal Device Capture
 #include "modules/video_capture/video_capture_factory.h"
@@ -83,13 +83,13 @@ void WebRTCProxy::FinalRelease()
 {
   //Remove factory
   peer_connection_factory_ = nullptr;
-  video_capturer_.release();
+  // video_capturer_.release();
 }
 
 STDMETHODIMP WebRTCProxy::createPeerConnection(VARIANT variant, IUnknown** peerConnection)
 {
   webrtc::PeerConnectionInterface::RTCConfiguration configuration;
-  webrtc::FakeConstraints constraints;
+  // webrtc::FakeConstraints constraints;
   JSObject obj(variant);
 
   if (!obj.isNull())
