@@ -106,6 +106,19 @@ public:
 		this->transceiver = transceiver;
 	}
 
+  //Getters
+  STDMETHOD(get_mid)              (VARIANT*   val);
+  STDMETHOD(get_sender)           (IUnknown** val);
+  STDMETHOD(get_receiver)         (IUnknown** val);
+  STDMETHOD(get_direction)        (VARIANT*   val);
+  STDMETHOD(get_currentDirection) (VARIANT*   val);
+  
+  //setters
+  STDMETHOD(put_direction)        (VARIANT val);
+  
+  //Methods
+  STDMETHOD(stop)();
+  
 private:
 	 rtc::scoped_refptr<webrtc::RtpTransceiverInterface> transceiver;
 };

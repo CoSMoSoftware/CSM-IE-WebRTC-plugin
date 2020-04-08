@@ -153,6 +153,15 @@ interface IDataChannel : IDispatch
 ]
 interface IRTPTransceiver : IDispatch
 {
+  [propget, id(1)] HRESULT mid              ([out, retval] VARIANT*     val);
+  [propget, id(2)] HRESULT sender           ([out, retval] IUnknown**   val);
+  [propget, id(3)] HRESULT receiver         ([out, retval] IUnknown**   val);
+  [propget, id(4)] HRESULT direction        ([out, retval] VARIANT*     val);
+  [propput, id(4)] HRESULT direction        ([in] VARIANT val);
+  [propget, id(5)] HRESULT currentDirection ([out, retval] VARIANT*     val);
+
+  [id(6), local]   HRESULT stop();
+
 };
 
 [
