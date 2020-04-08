@@ -18,7 +18,6 @@
 #include "api/audio_codecs/builtin_audio_encoder_factory.h"
 #include "api/video_codecs/builtin_video_decoder_factory.h"
 #include "api/video_codecs/builtin_video_encoder_factory.h"
-// #include "api/test/fake_constraints.h"
 
 // Normal Device Capture
 #include "modules/video_capture/video_capture_factory.h"
@@ -89,7 +88,6 @@ void WebRTCProxy::FinalRelease()
 STDMETHODIMP WebRTCProxy::createPeerConnection(VARIANT variant, IUnknown** peerConnection)
 {
   webrtc::PeerConnectionInterface::RTCConfiguration configuration;
-  // webrtc::FakeConstraints constraints;
   JSObject obj(variant);
 
   if (!obj.isNull())
@@ -184,7 +182,6 @@ STDMETHODIMP WebRTCProxy::createPeerConnection(VARIANT variant, IUnknown** peerC
   //Create peerconnection object, it will call the AddRef inside as it gets a ref to the observer
   rtc::scoped_refptr<webrtc::PeerConnectionInterface> pci = peer_connection_factory_->CreatePeerConnection(
     configuration,
-    // &constraints,
     NULL, // allocator
     NULL, // cert_generator
     pc    // observer

@@ -224,7 +224,7 @@ STDMETHODIMP RTCPeerConnection::setConfiguration(VARIANT variant)
   };
 
   //Apply new one
-  if (!pc->SetConfiguration(configuration))
+  if (!pc->SetConfiguration(configuration).ok())
     return E_INVALIDARG;
 
   //OK
