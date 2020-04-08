@@ -91,14 +91,12 @@ interface IMediaStreamTrack : IDispatch{
 	pointer_default(unique)
 ]
 interface IRTPSender : IDispatch{
-  [propget, id(1)] HRESULT id(       [out, retval] VARIANT*   val   );
-	[propget, id(2)] HRESULT track(    [out, retval] IUnknown** track );
-	[propget, id(3)] HRESULT transport([out, retval] IUnknown** trans );
-	[id(4), local]   HRESULT getCapabilities([in] VARIANT kind, [out, retval] VARIANT* caps );
-	[id(5), local]   HRESULT setParameters(  [in] VARIANT params );
-	[id(6), local]   HRESULT getParameters(  [out, retval] VARIANT* params);
-	[id(7), local]   HRESULT replaceTrack(   [in] IUnknown** track );
-	[id(8), local]   HRESULT getStats(       [out, retval] VARIANT* statsReport );
+  [propget, id(1)] HRESULT id           ([out, retval] VARIANT*   val    );
+	[propget, id(2)] HRESULT track        ([out, retval] IUnknown** track  );
+	[propget, id(3)] HRESULT transport    ([out, retval] IUnknown** trans  );
+	[id(4), local]   HRESULT setParameters([in]          VARIANT params    );
+	[id(5), local]   HRESULT getParameters([out, retval] VARIANT* params   );
+	[id(6), local]   HRESULT replaceTrack ([in]          VARIANT  track , [out, retval] boolean *ret);
 };
 
 [
@@ -174,6 +172,10 @@ interface IRTPTransceiver : IDispatch
 interface IRTPReceiver : IDispatch
 {
   [propget, id(1)] HRESULT id([out, retval] VARIANT*   val);
+  [propget, id(2)] HRESULT track([out, retval] IUnknown** track);
+  [propget, id(3)] HRESULT transport([out, retval] IUnknown** trans);
+  [id(4), local]   HRESULT setParameters([in] VARIANT params);
+  [id(5), local]   HRESULT getParameters([out, retval] VARIANT* params);
 };
 
 [

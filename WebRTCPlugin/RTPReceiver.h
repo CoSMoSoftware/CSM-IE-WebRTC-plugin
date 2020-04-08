@@ -120,12 +120,13 @@ public:
     return this->receiver;
   }
 
-  STDMETHOD(get_id)(VARIANT* val)
-  {
-    variant_t id = receiver->id().c_str();
-    *val = id;
-    return S_OK;
-  }
+  //Getters
+  STDMETHOD(get_id)(VARIANT* val);
+  STDMETHOD(get_track)(IUnknown** track);
+  STDMETHOD(get_transport)(IUnknown** trans);
+
+  STDMETHOD(setParameters)(VARIANT params);
+  STDMETHOD(getParameters)(VARIANT* params);
 
 private:
   rtc::scoped_refptr<webrtc::RtpReceiverInterface > receiver;
