@@ -428,6 +428,119 @@ STDMETHODIMP RTCPeerConnection::addIceCandidate(VARIANT successCallback, VARIANT
   //OK
   return success.Invoke();
 }
+STDMETHODIMP RTCPeerConnection::addTransceiverTrack(VARIANT track, VARIANT init, IUnknown** rtpTransceiver)
+{
+  if (!pc)
+    return E_UNEXPECTED;
+
+  //Get dispatch interface
+  if (track.vt != VT_DISPATCH)
+    return E_INVALIDARG;
+
+  IDispatch* disp = V_DISPATCH(&track);
+
+  if (!disp)
+    return E_INVALIDARG;
+
+  //Get atl com object from track.
+  CComPtr<ITrackAccess> proxy;
+  HRESULT hr = disp->QueryInterface(IID_PPV_ARGS(&proxy));
+  if (FAILED(hr))
+    return hr;
+
+  //TODO: parse init
+  webrtc::RtpTransceiverInit transceiverInit;
+
+  //Add track
+  auto result = pc->AddTransceiver(proxy->GetTrack(), transceiverInit);
+
+  //Return new object
+  rtc::scoped_refptr<webrtc::RtpTransceiverInterface > transceiverInterface;
+  if (result.ok())
+  {
+    transceiverInterface = result.value().get();
+  } else {
+    RTC_LOG(LS_ERROR) << result.error().message();
+    return E_UNEXPECTED;
+  }
+
+  //Create activeX object for media stream track
+  CComObject<RTPTransceiver>* transceiver;
+  HRESULT hresult = CComObject<RTPTransceiver>::CreateInstance(&transceiver);
+
+  if (FAILED(hresult))
+    return hresult;
+
+  //Attach to native object
+  transceiver->Attach(transceiverInterface);
+
+  //Get Reference to pass it to JS
+  *rtpTransceiver = transceiver->GetUnknown();
+
+  //Add JS reference
+  (*rtpTransceiver)->AddRef();
+
+  //Done
+  return S_OK;
+
+}
+
+STDMETHODIMP RTCPeerConnection::addTransceiverKind(VARIANT kind, VARIANT init, IUnknown** rtpTransceiver)
+{
+  if (!pc)
+    return E_UNEXPECTED;
+
+  //Get media kind
+  cricket::MediaType mediaType;
+  std::string mediaKind = (char*)_bstr_t(kind);
+
+  //Check
+  if (mediaKind.compare("audio")==0)
+    //Audio
+    mediaType = cricket::MEDIA_TYPE_AUDIO;
+  else if (mediaKind.compare("video") == 0)
+    //Video
+    mediaType = cricket::MEDIA_TYPE_VIDEO;
+  else 
+    //Error
+    return E_INVALIDARG;
+
+  //TODO: parse init
+  webrtc::RtpTransceiverInit transceiverInit;
+
+  //Add transceiver
+  auto result = pc->AddTransceiver(mediaType, transceiverInit);
+
+  //Return new object
+  rtc::scoped_refptr<webrtc::RtpTransceiverInterface > transceiverInterface;
+  if (result.ok())
+  {
+    transceiverInterface = result.value().get();
+  } else
+  {
+    RTC_LOG(LS_ERROR) << result.error().message();
+    return E_UNEXPECTED;
+  }
+
+  //Create activeX object for media stream track
+  CComObject<RTPTransceiver>* transceiver;
+  HRESULT hresult = CComObject<RTPTransceiver>::CreateInstance(&transceiver);
+
+  if (FAILED(hresult))
+    return hresult;
+
+  //Attach to native object
+  transceiver->Attach(transceiverInterface);
+
+  //Get Reference to pass it to JS
+  *rtpTransceiver = transceiver->GetUnknown();
+
+  //Add JS reference
+  (*rtpTransceiver)->AddRef();
+
+  //Done
+  return S_OK;
+}
 
 STDMETHODIMP RTCPeerConnection::addTrack(VARIANT track, VARIANT stream, IUnknown** rtpSender)
 {

@@ -115,6 +115,8 @@ public:
   STDMETHOD(createAnswer)         (VARIANT successCallback, VARIANT failureCallback, VARIANT options     );
   STDMETHOD(setRemoteDescription) (VARIANT successCallback, VARIANT failureCallback, VARIANT description );
   STDMETHOD(addIceCandidate)      (VARIANT successCallback, VARIANT failureCallback, VARIANT candidate   );
+  STDMETHOD(addTransceiverTrack)  (VARIANT track,           VARIANT init,            IUnknown** transceiver);
+  STDMETHOD(addTransceiverKind)   (VARIANT kind,            VARIANT init,            IUnknown** transceiver);
   STDMETHOD(addTrack)             (VARIANT track,           VARIANT stream,          IUnknown** rtpSender);
   STDMETHOD(removeTrack)          (VARIANT sender);
   STDMETHOD(getRemoteStreamTracks)(VARIANT stream,          VARIANT successCallback);

@@ -65,6 +65,9 @@ interface IRTCPeerConnection : IDispatch{
   [id(30), local] HRESULT getTransceivers ([out, retval] VARIANT* transceivers);
 
   [id(31), local] HRESULT getStats        ([in] VARIANT statsCallback, [in] VARIANT selector);
+
+  [id(32), local] HRESULT addTransceiverTrack([in] VARIANT track, VARIANT init, [out, retval] IUnknown** transceiver);
+  [id(33), local] HRESULT addTransceiverKind ([in] VARIANT kind , VARIANT init, [out, retval] IUnknown** transceiver);
 };
 
 [
