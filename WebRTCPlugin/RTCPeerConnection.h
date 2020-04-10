@@ -142,6 +142,9 @@ public:
   STDMETHOD(put_onaddstream)(               VARIANT handler );
   STDMETHOD(put_onremovestream)(            VARIANT handler );
   STDMETHOD(put_ondatachannel)(             VARIANT handler );
+  STDMETHOD(put_onaddtrack)(                VARIANT handler );
+  STDMETHOD(put_onremovetrack)(             VARIANT handler );
+
 
   STDMETHOD(getSenders)           (VARIANT* senders);
   STDMETHOD(getReceivers)         (VARIANT* receivers);
@@ -159,6 +162,9 @@ public:
   void OnIceGatheringChange(webrtc::PeerConnectionInterface::IceGatheringState new_state) override;
   void OnIceCandidate(const webrtc::IceCandidateInterface* candidate) override;
   void OnIceConnectionReceivingChange(bool receiving) override;
+  void OnTrack(rtc::scoped_refptr<webrtc::RtpTransceiverInterface> transceiver) override;
+  void OnRemoveTrack(rtc::scoped_refptr<webrtc::RtpReceiverInterface> receiver) override;
+  
 
 private:
   rtc::scoped_refptr<webrtc::PeerConnectionInterface> pc;
@@ -175,6 +181,8 @@ private:
   Callback onaddstream;
   Callback onremovestream;
   Callback ondatachannel;
+  Callback onaddtrack;
+  Callback onremovetrack;
 
 };
 

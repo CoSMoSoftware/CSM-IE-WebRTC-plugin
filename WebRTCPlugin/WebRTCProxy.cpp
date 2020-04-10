@@ -178,7 +178,10 @@ STDMETHODIMP WebRTCProxy::createPeerConnection(VARIANT variant, IUnknown** peerC
 
   if (FAILED(hresult))
     return hresult;
-  
+
+  //Force unified plan
+  configuration.sdp_semantics = webrtc::SdpSemantics::kUnifiedPlan;
+
   //Create peerconnection object, it will call the AddRef inside as it gets a ref to the observer
   rtc::scoped_refptr<webrtc::PeerConnectionInterface> pci = peer_connection_factory_->CreatePeerConnection(
     configuration,

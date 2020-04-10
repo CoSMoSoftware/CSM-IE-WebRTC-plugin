@@ -34,6 +34,9 @@ STDMETHODIMP RTPTransceiver::get_sender(IUnknown**   val)
   //Get Reference to pass it to JS
   *val = sender->GetUnknown();
 
+  //Add JS reference
+  (*val)->AddRef();
+
   return S_OK;
 }
 
@@ -57,6 +60,9 @@ STDMETHODIMP RTPTransceiver::get_receiver(IUnknown**   val)
 
   //Get Reference to pass it to JS
   *val = receiver->GetUnknown();
+
+  //Add JS reference
+  (*val)->AddRef();
 
   return S_OK;
 }

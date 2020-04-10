@@ -222,6 +222,8 @@ STDMETHODIMP RTCPeerConnection::setConfiguration(VARIANT variant)
       }
     }
   };
+  //Force unified plan
+  configuration.sdp_semantics = webrtc::SdpSemantics::kUnifiedPlan;
 
   //Apply new one
   if (!pc->SetConfiguration(configuration).ok())
@@ -729,6 +731,9 @@ STDMETHODIMP RTCPeerConnection::put_onconnectionstatechange(VARIANT handler)    
 STDMETHODIMP RTCPeerConnection::put_onaddstream(VARIANT handler)                { return MarshalCallback(onaddstream				        , handler);	}
 STDMETHODIMP RTCPeerConnection::put_onremovestream(VARIANT handler)             { return MarshalCallback(onremovestream				      , handler);	}
 STDMETHODIMP RTCPeerConnection::put_ondatachannel(VARIANT handler)              { return MarshalCallback(ondatachannel              , handler); }
+STDMETHODIMP RTCPeerConnection::put_onaddtrack(VARIANT handler)                 { return MarshalCallback(onaddtrack                 , handler); }
+STDMETHODIMP RTCPeerConnection::put_onremovetrack(VARIANT handler)              { return MarshalCallback(onremovetrack              , handler); }
+
 
 // RTCPeerConnection Observer interface
 
@@ -781,6 +786,44 @@ void RTCPeerConnection::OnRemoveStream(rtc::scoped_refptr<webrtc::MediaStreamInt
 	remoteStreams.erase(stream->id());
 
 	DispatchAsync(onremovestream,label);
+}
+
+void RTCPeerConnection::OnTrack(rtc::scoped_refptr<webrtc::RtpTransceiverInterface> transceiverInerface)
+{
+  //Create activeX object for transceiver
+  CComObject<RTPTransceiver>* transceiver;
+  HRESULT hresult = CComObject<RTPTransceiver>::CreateInstance(&transceiver);
+
+  if (FAILED(hresult))
+    return;
+
+  //Attach to native object
+  transceiver->Attach(transceiverInerface);
+
+  //Get Reference to pass it to JS
+  IUnknown* rtpTransceiver = transceiver->GetUnknown();
+
+  //Call event handler
+  DispatchAsync(onaddtrack, rtpTransceiver);
+}
+
+void RTCPeerConnection::OnRemoveTrack(rtc::scoped_refptr<webrtc::RtpReceiverInterface> receiverInterface)
+{
+  //Create activeX object for receiver
+  CComObject<RTPReceiver>* receiver;
+  HRESULT hresult = CComObject<RTPReceiver>::CreateInstance(&receiver);
+
+  if (FAILED(hresult))
+    return;
+
+  //Attach to native object
+  receiver->Attach(receiverInterface);
+
+  //Get Reference to pass it to JS
+  IUnknown* rtpReceiver = receiver->GetUnknown();
+
+  //Call event handler
+  DispatchAsync(onremovetrack, rtpReceiver);
 }
 
 void RTCPeerConnection::OnDataChannel(rtc::scoped_refptr<webrtc::DataChannelInterface> dataChannelInterface)
@@ -1237,9 +1280,10 @@ STDMETHODIMP RTCPeerConnection::getSenders(VARIANT* ret)
   auto senders = pc->GetSenders();
 
   //Output arrau
-  CComSafeArray<VARIANT> array;
+  CComSafeArray<VARIANT> array(senders.size());
 
   //For each sender
+  int i = 0;
   for (auto &senderInterface : senders)
   {
     //Create activeX object for sender
@@ -1256,7 +1300,7 @@ STDMETHODIMP RTCPeerConnection::getSenders(VARIANT* ret)
     IUnknown* rtpSender = sender->GetUnknown();
 
     //Add it
-    array.Add(_variant_t(rtpSender));
+    array.SetAt(i++, _variant_t(rtpSender));
   }
 
   // Initialize the variant
@@ -1278,9 +1322,10 @@ STDMETHODIMP RTCPeerConnection::getReceivers(VARIANT* ret)
   auto receivers = pc->GetReceivers();
 
   //Output arrau
-  CComSafeArray<VARIANT> array;
+  CComSafeArray<VARIANT> array(receivers.size());
 
   //For each sender
+  int i = 0;
   for (auto &receiverInterface : receivers)
   {
     //Create activeX object for sender
@@ -1297,7 +1342,7 @@ STDMETHODIMP RTCPeerConnection::getReceivers(VARIANT* ret)
     IUnknown* rtpReceiver = receiver->GetUnknown();
 
     //Add it
-    array.Add(_variant_t(rtpReceiver));
+    array.SetAt(i++, _variant_t(rtpReceiver));
   }
 
   // Initialize the variant
@@ -1316,29 +1361,30 @@ STDMETHODIMP RTCPeerConnection::getTransceivers(VARIANT* ret)
     return E_UNEXPECTED;
 
   //Get all senders
-  auto senders = pc->GetSenders();
+  auto transceivers = pc->GetTransceivers();
 
-  //Output arrau
-  CComSafeArray<VARIANT> array;
+  //Output array
+  CComSafeArray<VARIANT> array(transceivers.size());
 
   //For each sender
-  for (auto &senderInterface : senders)
+  int i = 0;
+  for (auto &transceiverInterface : transceivers)
   {
     //Create activeX object for sender
-    CComObject<RTPSender>* sender;
-    HRESULT hresult = CComObject<RTPSender>::CreateInstance(&sender);
+    CComObject<RTPTransceiver>* transceiver;
+    HRESULT hresult = CComObject<RTPTransceiver>::CreateInstance(&transceiver);
 
     if (FAILED(hresult))
       return hresult;
 
     //Attach to native object
-    sender->Attach(senderInterface);
+    transceiver->Attach(transceiverInterface);
 
     //Get Reference to pass it to JS
-    IUnknown* rtpSender = sender->GetUnknown();
+    IUnknown* rtpTransceiver = transceiver->GetUnknown();
 
     //Add it
-    array.Add(_variant_t(rtpSender));
+    array.SetAt(i++, _variant_t(rtpTransceiver));
   }
 
   // Initialize the variant
@@ -1360,10 +1406,40 @@ STDMETHODIMP RTCPeerConnection::getStats(VARIANT statsCallback, VARIANT selector
   //Create callback
   rtc::scoped_refptr<GetStatsCallback> callback = new GetStatsCallback(pc, GetThread(), statsCallback);
 
-  //TODO: manage selector
+  //Check if it could be a sender or receiver
+  if (selector.vt == VT_DISPATCH)
+  {
+    //Get dispatch
+    IDispatch* disp = V_DISPATCH(&selector);
 
-  //Get stats
-  pc->GetStats(callback);
+    if (!disp)
+      return E_INVALIDARG;
+
+    //Get atl com object from selector.
+    CComPtr<ISenderAccess> senderProxy;
+    HRESULT hr = disp->QueryInterface(IID_PPV_ARGS(&senderProxy));
+    if (SUCCEEDED(hr))
+    {
+      //Get stats without selector
+      pc->GetStats(senderProxy->GetSender(), callback);
+      //All ok
+      return S_OK;
+    } 
+
+    CComPtr<IReceiverAccess> receiverProxy;
+    hr = disp->QueryInterface(IID_PPV_ARGS(&receiverProxy));
+    if (SUCCEEDED(hr)) {
+        //Get stats without selector
+        pc->GetStats(receiverProxy->GetReceiver(), callback);
+        //All ok
+        return S_OK;
+    }
+    //All ok
+    return E_INVALIDARG;
+  } else {
+    //Get stats without selector
+    pc->GetStats(callback);
+  }
 
   //All ok
   return S_OK;

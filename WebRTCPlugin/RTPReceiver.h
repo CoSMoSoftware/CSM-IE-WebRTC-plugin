@@ -127,6 +127,7 @@ public:
 
   STDMETHOD(setParameters)(VARIANT params);
   STDMETHOD(getParameters)(VARIANT* params);
+  STDMETHOD(getStreamIds)(VARIANT* streamIds);
 
 private:
   rtc::scoped_refptr<webrtc::RtpReceiverInterface > receiver;

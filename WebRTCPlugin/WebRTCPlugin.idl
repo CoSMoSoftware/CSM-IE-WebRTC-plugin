@@ -68,6 +68,9 @@ interface IRTCPeerConnection : IDispatch{
 
   [id(32), local] HRESULT addTransceiverTrack([in] VARIANT track, VARIANT init, [out, retval] IUnknown** transceiver);
   [id(33), local] HRESULT addTransceiverKind ([in] VARIANT kind , VARIANT init, [out, retval] IUnknown** transceiver);
+
+  [propput, id(34)] HRESULT onaddtrack([in] VARIANT handler);
+  [propput, id(35)] HRESULT onremovetrack([in] VARIANT handler);
 };
 
 [
@@ -179,6 +182,7 @@ interface IRTPReceiver : IDispatch
   [propget, id(3)] HRESULT transport([out, retval] IUnknown** trans);
   [id(4), local]   HRESULT setParameters([in] VARIANT params);
   [id(5), local]   HRESULT getParameters([out, retval] VARIANT* params);
+  [id(6), local]   HRESULT getStreamIds([out, retval] VARIANT* streamIds);
 };
 
 [

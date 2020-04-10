@@ -36,6 +36,9 @@ STDMETHODIMP RTPSender::get_track(IUnknown** val)
   //Get Reference to pass it to JS
   *val = track->GetUnknown();
 
+  //Add JS reference
+  (*val)->AddRef();
+
   return S_OK;
 };
 
