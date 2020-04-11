@@ -24,8 +24,8 @@ then on to the [JS shim](https://github.com/CoSMoSoftware/CSM-IE-WebRTC-plugin-s
 
 ### Libwebrtc Dependency
 
-Compiling this code requires a 32 bits build of libwebrtc branch head 73.
-It has been developped and teted with MSVC 2019 (16.2)
+Compiling this code requires a 32 bits build of libwebrtc branch head 79.
+It has been developped and teted with MSVC 2017 (15.9) MSVC 2019 (16.2)
 
 #### Libwebrtc Installer
 TODO: Corresponding installer can be found

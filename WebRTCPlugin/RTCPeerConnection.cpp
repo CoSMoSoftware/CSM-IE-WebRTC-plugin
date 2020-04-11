@@ -239,30 +239,36 @@ STDMETHODIMP RTCPeerConnection::createOffer(VARIANT successCallback, VARIANT fai
     return E_UNEXPECTED;
 
   webrtc::PeerConnectionInterface::RTCOfferAnswerOptions rtcOfferAnswerOptions;
-  JSObject obj(options);
+  if (options.vt != 0)
+  { 
+    JSObject obj(options);
+      if (!obj.isNull())
+    {
+      /*
+      dictionary RTCOfferAnswerOptions {
+        boolean voiceActivityDetection = true;
+      };
 
-  if (!obj.isNull())
+      dictionary RTCOfferOptions : RTCOfferAnswerOptions {
+        boolean iceRestart = false;
+      };
+      //LEGACY
+      partial dictionary RTCOfferOptions {
+        boolean offerToReceiveAudio;
+        boolean offerToReceiveVideo;
+      };
+    */
+      if (obj.GetBooleanProperty(L"offerToReceiveAudio", false))
+        rtcOfferAnswerOptions.offer_to_receive_audio = webrtc::PeerConnectionInterface::RTCOfferAnswerOptions::kOfferToReceiveMediaTrue;
+      if (obj.GetBooleanProperty(L"offerToReceiveVideo", false))
+        rtcOfferAnswerOptions.offer_to_receive_video = webrtc::PeerConnectionInterface::RTCOfferAnswerOptions::kOfferToReceiveMediaTrue;
+      rtcOfferAnswerOptions.voice_activity_detection  = obj.GetBooleanProperty(L"voiceActivityDetection", true);
+      rtcOfferAnswerOptions.ice_restart               = obj.GetBooleanProperty(L"iceRestart", false);
+    }
+  }
+  else
   {
-    /*
-    dictionary RTCOfferAnswerOptions {
-      boolean voiceActivityDetection = true;
-    };
-
-    dictionary RTCOfferOptions : RTCOfferAnswerOptions {
-      boolean iceRestart = false;
-    };
-    //LEGACY
-    partial dictionary RTCOfferOptions {
-      boolean offerToReceiveAudio;
-      boolean offerToReceiveVideo;
-    };
-  */
-    if (obj.GetBooleanProperty(L"offerToReceiveAudio", false))
-      rtcOfferAnswerOptions.offer_to_receive_audio = webrtc::PeerConnectionInterface::RTCOfferAnswerOptions::kOfferToReceiveMediaTrue;
-    if (obj.GetBooleanProperty(L"offerToReceiveVideo", false))
-      rtcOfferAnswerOptions.offer_to_receive_video = webrtc::PeerConnectionInterface::RTCOfferAnswerOptions::kOfferToReceiveMediaTrue;
-    rtcOfferAnswerOptions.voice_activity_detection  = obj.GetBooleanProperty(L"voiceActivityDetection", true);
-    rtcOfferAnswerOptions.ice_restart               = obj.GetBooleanProperty(L"iceRestart", false);
+    // NOTE ALEX: what is the spec saying about dealing with no option?
   }
 
   //Create observer
@@ -321,21 +327,26 @@ STDMETHODIMP RTCPeerConnection::createAnswer(VARIANT successCallback, VARIANT fa
     return E_UNEXPECTED;
 
   webrtc::PeerConnectionInterface::RTCOfferAnswerOptions rtcOfferAnswerOptions;
-  JSObject obj(options);
-
-  if (!obj.isNull())
+  if (options.vt != 0)
   {
-    /*
-    dictionary RTCOfferAnswerOptions {
-    boolean voiceActivityDetection = true;
-    };
+    JSObject obj(options);
 
-    dictionary RTCAnswerOptions : RTCOfferAnswerOptions {
-    };
+    if (!obj.isNull())
+    {
+      /*
+      dictionary RTCOfferAnswerOptions {
+      boolean voiceActivityDetection = true;
+      };
 
-    */
-    rtcOfferAnswerOptions.voice_activity_detection = obj.GetBooleanProperty(L"voiceActivityDetection", true);
+      dictionary RTCAnswerOptions : RTCOfferAnswerOptions {
+      };
+
+      */
+      rtcOfferAnswerOptions.voice_activity_detection = obj.GetBooleanProperty(L"voiceActivityDetection", true);
+    }
   }
+  else
+  { }
 
   //Create observer
   rtc::scoped_refptr<CreateSessionDescriptionCallback> observer = new CreateSessionDescriptionCallback(pc, GetThread(), successCallback, failureCallback);
@@ -349,6 +360,9 @@ STDMETHODIMP RTCPeerConnection::setRemoteDescription(VARIANT successCallback, VA
 {
   if (!pc)
     return E_UNEXPECTED;
+
+  if (description.vt == 0)
+    return E_INVALIDARG;
 
   Callback failure(failureCallback);
   JSObject obj(description);
