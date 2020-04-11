@@ -49,16 +49,16 @@ interface IRTCPeerConnection : IDispatch{
   [propget, id(16), local] HRESULT currentRemoteDescription([out, retval] VARIANT* val );
   [propget, id(17), local] HRESULT pendingRemoteDescription([out, retval] VARIANT* val );
 
-  [propput, id(18)] HRESULT onnegotiationneeded(       [in] VARIANT handler );
-  [propput, id(19)] HRESULT onicecandidate(            [in] VARIANT handler );
-  [propput, id(20)] HRESULT onicecandidateerror(       [in] VARIANT handler );
-  [propput, id(21)] HRESULT onsignalingstatechange(    [in] VARIANT handler );
-  [propput, id(22)] HRESULT oniceconnectionstatechange([in] VARIANT handler );
-  [propput, id(23)] HRESULT onicegatheringstatechange( [in] VARIANT handler );
-  [propput, id(24)] HRESULT onconnectionstatechange(   [in] VARIANT handler );
-  [propput, id(25)] HRESULT onaddstream(               [in] VARIANT handler );
-  [propput, id(26)] HRESULT onremovestream(            [in] VARIANT handler );
-  [propput, id(27)] HRESULT ondatachannel(             [in] VARIANT handler );
+  [propput, id(18), local] HRESULT onnegotiationneeded(       [in] VARIANT handler );
+  [propput, id(19), local] HRESULT onicecandidate(            [in] VARIANT handler );
+  [propput, id(20), local] HRESULT onicecandidateerror(       [in] VARIANT handler );
+  [propput, id(21), local] HRESULT onsignalingstatechange(    [in] VARIANT handler );
+  [propput, id(22), local] HRESULT oniceconnectionstatechange([in] VARIANT handler );
+  [propput, id(23), local] HRESULT onicegatheringstatechange( [in] VARIANT handler );
+  [propput, id(24), local] HRESULT onconnectionstatechange(   [in] VARIANT handler );
+  [propput, id(25), local] HRESULT onaddstream(               [in] VARIANT handler );
+  [propput, id(26), local] HRESULT onremovestream(            [in] VARIANT handler );
+  [propput, id(27), local] HRESULT ondatachannel(             [in] VARIANT handler );
 
   [id(28), local] HRESULT getSenders      ([out, retval] VARIANT* senders);
   [id(29), local] HRESULT getReceivers    ([out, retval] VARIANT* receivers);
@@ -69,8 +69,8 @@ interface IRTCPeerConnection : IDispatch{
   [id(32), local] HRESULT addTransceiverTrack([in] VARIANT track, VARIANT init, [out, retval] IUnknown** transceiver);
   [id(33), local] HRESULT addTransceiverKind ([in] VARIANT kind , VARIANT init, [out, retval] IUnknown** transceiver);
 
-  [propput, id(34)] HRESULT onaddtrack([in] VARIANT handler);
-  [propput, id(35)] HRESULT onremovetrack([in] VARIANT handler);
+  [propput, id(34), local] HRESULT onaddtrack([in] VARIANT handler);
+  [propput, id(35), local] HRESULT onremovetrack([in] VARIANT handler);
 };
 
 [
@@ -81,12 +81,12 @@ interface IRTCPeerConnection : IDispatch{
 	pointer_default(unique)
 ]
 interface IMediaStreamTrack : IDispatch{
-  [propget, id(1)] HRESULT id(     [out, retval] VARIANT* val );
-  [propget, id(2)] HRESULT kind(   [out, retval] VARIANT* val );
-  [propget, id(3)] HRESULT label(  [out, retval] VARIANT* val );
-  [propget, id(4)] HRESULT state(  [out, retval] VARIANT* val );
-  [propget, id(5)] HRESULT enabled([out, retval] VARIANT* val );
-  [propput, id(5)] HRESULT enabled([in]          VARIANT  val );
+  [propget, id(1), local] HRESULT id(     [out, retval] VARIANT* val );
+  [propget, id(2), local] HRESULT kind(   [out, retval] VARIANT* val );
+  [propget, id(3), local] HRESULT label(  [out, retval] VARIANT* val );
+  [propget, id(4), local] HRESULT state(  [out, retval] VARIANT* val );
+  [propget, id(5), local] HRESULT enabled([out, retval] VARIANT* val );
+  [propput, id(5), local] HRESULT enabled([in]          VARIANT  val );
 };
 
 [
@@ -97,9 +97,9 @@ interface IMediaStreamTrack : IDispatch{
 	pointer_default(unique)
 ]
 interface IRTPSender : IDispatch{
-  [propget, id(1)] HRESULT id           ([out, retval] VARIANT*   val    );
-	[propget, id(2)] HRESULT track        ([out, retval] IUnknown** track  );
-	[propget, id(3)] HRESULT transport    ([out, retval] IUnknown** trans  );
+  [propget, id(1), local] HRESULT id           ([out, retval] VARIANT*   val    );
+	[propget, id(2), local] HRESULT track        ([out, retval] IUnknown** track  );
+	[propget, id(3), local] HRESULT transport    ([out, retval] IUnknown** trans  );
 	[id(4), local]   HRESULT setParameters([in]          VARIANT params    );
 	[id(5), local]   HRESULT getParameters([out, retval] VARIANT* params   );
 	[id(6), local]   HRESULT replaceTrack ([in]          VARIANT  track , [out, retval] boolean *ret);
@@ -114,9 +114,9 @@ interface IRTPSender : IDispatch{
 ]
 interface IVideoRenderer : IDispatch{
 	[id(1), local]    HRESULT setTrack(   [in]          VARIANT track   );
-	[propget, id(2)]  HRESULT videoWidth( [out, retval] SHORT* pVal     );
-	[propget, id(3)]  HRESULT videoHeight([out, retval] SHORT* pVal     );
-	[propput, id(4)]  HRESULT onresize(   [in]          VARIANT handler );
+	[propget, id(2), local]  HRESULT videoWidth( [out, retval] SHORT* pVal     );
+	[propget, id(3), local]  HRESULT videoHeight([out, retval] SHORT* pVal     );
+	[propput, id(4), local]  HRESULT onresize(   [in]          VARIANT handler );
 };
 
 [
@@ -130,22 +130,22 @@ interface IDataChannel : IDispatch
 {
   [id(1), local]    HRESULT send([in] VARIANT data);
   [id(2), local]    HRESULT close();
-  [propget, id(3) ] HRESULT label(                     [out, retval] VARIANT* val);
-  [propget, id(4) ] HRESULT ordered(                   [out, retval] VARIANT* val);
-  [propget, id(5) ] HRESULT maxPacketLifeTime(         [out, retval] VARIANT* val);
-  [propget, id(6) ] HRESULT negotiated(                [out, retval] VARIANT* val);
-  [propget, id(7) ] HRESULT id(                        [out, retval] VARIANT* val);
-  [propget, id(8) ] HRESULT priority(                  [out, retval] VARIANT* val);
-  [propget, id(9) ] HRESULT readyState(                [out, retval] VARIANT* val);
-  [propget, id(10)] HRESULT bufferedAmount(            [out, retval] VARIANT* val);
-  [propget, id(11)] HRESULT bufferedAmountLowThreshold([out, retval] VARIANT* val);
-  [propput, id(11)] HRESULT bufferedAmountLowThreshold([in]          VARIANT  val);
+  [propget, id(3) , local] HRESULT label(                     [out, retval] VARIANT* val);
+  [propget, id(4) , local] HRESULT ordered(                   [out, retval] VARIANT* val);
+  [propget, id(5) , local] HRESULT maxPacketLifeTime(         [out, retval] VARIANT* val);
+  [propget, id(6) , local] HRESULT negotiated(                [out, retval] VARIANT* val);
+  [propget, id(7) , local] HRESULT id(                        [out, retval] VARIANT* val);
+  [propget, id(8) , local] HRESULT priority(                  [out, retval] VARIANT* val);
+  [propget, id(9) , local] HRESULT readyState(                [out, retval] VARIANT* val);
+  [propget, id(10), local] HRESULT bufferedAmount(            [out, retval] VARIANT* val);
+  [propget, id(11), local] HRESULT bufferedAmountLowThreshold([out, retval] VARIANT* val);
+  [propput, id(11), local] HRESULT bufferedAmountLowThreshold([in]          VARIANT  val);
 
-  [propput, id(12)] HRESULT onopen(             [in] VARIANT handler);
-  [propput, id(13)] HRESULT onbufferedamountlow([in] VARIANT handler);
-  [propput, id(14)] HRESULT onerror(            [in] VARIANT handler);
-  [propput, id(15)] HRESULT onclose(            [in] VARIANT handler);
-  [propput, id(16)] HRESULT onmessage(          [in] VARIANT handler);
+  [propput, id(12), local] HRESULT onopen(             [in] VARIANT handler);
+  [propput, id(13), local] HRESULT onbufferedamountlow([in] VARIANT handler);
+  [propput, id(14), local] HRESULT onerror(            [in] VARIANT handler);
+  [propput, id(15), local] HRESULT onclose(            [in] VARIANT handler);
+  [propput, id(16), local] HRESULT onmessage(          [in] VARIANT handler);
 };
 
 [
@@ -157,12 +157,12 @@ interface IDataChannel : IDispatch
 ]
 interface IRTPTransceiver : IDispatch
 {
-  [propget, id(1)] HRESULT mid              ([out, retval] VARIANT*     val);
-  [propget, id(2)] HRESULT sender           ([out, retval] IUnknown**   val);
-  [propget, id(3)] HRESULT receiver         ([out, retval] IUnknown**   val);
-  [propget, id(4)] HRESULT direction        ([out, retval] VARIANT*     val);
-  [propput, id(4)] HRESULT direction        ([in] VARIANT val);
-  [propget, id(5)] HRESULT currentDirection ([out, retval] VARIANT*     val);
+  [propget, id(1), local] HRESULT mid              ([out, retval] VARIANT*     val);
+  [propget, id(2), local] HRESULT sender           ([out, retval] IUnknown**   val);
+  [propget, id(3), local] HRESULT receiver         ([out, retval] IUnknown**   val);
+  [propget, id(4), local] HRESULT direction        ([out, retval] VARIANT*     val);
+  [propput, id(4), local] HRESULT direction        ([in] VARIANT val);
+  [propget, id(5), local] HRESULT currentDirection ([out, retval] VARIANT*     val);
 
   [id(6), local]   HRESULT stop();
 
@@ -177,9 +177,9 @@ interface IRTPTransceiver : IDispatch
 ]
 interface IRTPReceiver : IDispatch
 {
-  [propget, id(1)] HRESULT id([out, retval] VARIANT*   val);
-  [propget, id(2)] HRESULT track([out, retval] IUnknown** track);
-  [propget, id(3)] HRESULT transport([out, retval] IUnknown** trans);
+  [propget, id(1), local] HRESULT id([out, retval] VARIANT*   val);
+  [propget, id(2), local] HRESULT track([out, retval] IUnknown** track);
+  [propget, id(3), local] HRESULT transport([out, retval] IUnknown** trans);
   [id(4), local]   HRESULT setParameters([in] VARIANT params);
   [id(5), local]   HRESULT getParameters([out, retval] VARIANT* params);
   [id(6), local]   HRESULT getStreamIds([out, retval] VARIANT* streamIds);

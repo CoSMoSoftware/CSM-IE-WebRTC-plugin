@@ -101,7 +101,7 @@ public:
 		this->transceiver = nullptr;
 	}
 	
-	void Attach(rtc::scoped_refptr<webrtc::RtpTransceiverInterface> &transceiver)
+	void Attach(const rtc::scoped_refptr<webrtc::RtpTransceiverInterface> &transceiver)
 	{
 		this->transceiver = transceiver;
 	}

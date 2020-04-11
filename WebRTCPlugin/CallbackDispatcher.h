@@ -187,6 +187,16 @@ public:
 	  });
   }
 
+  HRESULT DispatchAsync(Callback& callback, std::function<IUnknown*()> func)
+  {
+    //clone callback
+    Callback *cloned = new Callback(callback);
+    //Dispatch
+    return DispatchAsyncInternal([=]() {
+      cloned->Invoke(func());
+      delete(cloned);
+    });
+  }
 
   virtual ~CallbackDispatcher() = default;
 

@@ -11,6 +11,21 @@ STDMETHODIMP RTPTransceiver::get_mid(VARIANT* val)
 {
   if (!transceiver)
     return E_UNEXPECTED;
+
+  //If no mid yet
+  if (!transceiver->mid().has_value())
+  {
+    // Initialize the variant
+    VariantInit(val);
+    //Set array
+    val->vt = VT_NULL;
+    //Ok
+    return S_OK;
+  }
+
+  variant_t mid = transceiver->mid().value().c_str();
+  *val = mid;
+
   return S_OK;
 }
 

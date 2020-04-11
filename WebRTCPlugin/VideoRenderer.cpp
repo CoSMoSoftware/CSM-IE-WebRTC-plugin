@@ -156,14 +156,20 @@ STDMETHODIMP VideoRenderer::setTrack(VARIANT track)
 	if (!disp)
 		return E_INVALIDARG;
 
+  //Get atl com object from track.
+  CComPtr<IMediaStreamTrack> proxy;
+  HRESULT hr = disp->QueryInterface(IID_PPV_ARGS(&proxy));
+  if (FAILED(hr))
+    return hr;
+
 	//Get atl com object from track.
-	CComPtr<ITrackAccess> proxy;
-	HRESULT hr = disp->QueryInterface(IID_PPV_ARGS(&proxy));
+	CComPtr<ITrackAccess> accessor;
+	hr = proxy->QueryInterface(IID_PPV_ARGS(&accessor));
 	if (FAILED(hr))
 		return hr;
 	
 	//Convert to video
-	webrtc::VideoTrackInterface* videoTrack = reinterpret_cast<webrtc::VideoTrackInterface*>(proxy->GetTrack().get());
+	webrtc::VideoTrackInterface* videoTrack = reinterpret_cast<webrtc::VideoTrackInterface*>(accessor->GetTrack().get());
 
 	if (!videoTrack)
 		return E_INVALIDARG;
