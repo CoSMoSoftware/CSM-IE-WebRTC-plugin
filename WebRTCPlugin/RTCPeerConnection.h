@@ -95,6 +95,8 @@ public:
 
 	HRESULT FinalConstruct()
 	{
+    if (pc)
+      pc->Close();
 		return S_OK;
 	}
 
