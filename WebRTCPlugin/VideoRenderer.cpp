@@ -15,6 +15,25 @@ HRESULT VideoRenderer::FinalConstruct()
 	return S_OK;
 }
 
+void VideoRenderer::FinalRelease()
+{
+  //IF we had a previous track
+  if (mediaTrack)
+  {
+    //Convert to video
+    webrtc::VideoTrackInterface* videoTrack = reinterpret_cast<webrtc::VideoTrackInterface*>(mediaTrack.get());
+
+    if (!videoTrack)
+      return;
+
+    //Remove us from video listener
+    videoTrack->RemoveSink(this);
+
+    //Remove track
+    mediaTrack.release();
+  }
+}
+
 void VideoRenderer::OnFrame(const webrtc::VideoFrame& frame) 
 {
 	//Check if size has changed
@@ -147,6 +166,27 @@ HRESULT VideoRenderer::OnDrawAdvanced(ATL_DRAWINFO& di)
 
 STDMETHODIMP VideoRenderer::setTrack(VARIANT track)
 {
+  //IF we had a previous track
+  if (mediaTrack)
+  {
+    //Convert to video
+    webrtc::VideoTrackInterface* videoTrack = reinterpret_cast<webrtc::VideoTrackInterface*>(mediaTrack.get());
+
+    if (!videoTrack)
+      return E_INVALIDARG;
+
+    //Remove us from video listener
+    videoTrack->RemoveSink(this);
+
+    //Remove track
+    mediaTrack.release();
+  }
+
+  //IF it is null
+  if (track.vt == VT_NULL)
+    //Done
+    return S_OK;
+
 	//Get dispatch interface
 	if (track.vt != VT_DISPATCH)
 		return E_INVALIDARG;
@@ -156,23 +196,25 @@ STDMETHODIMP VideoRenderer::setTrack(VARIANT track)
 	if (!disp)
 		return E_INVALIDARG;
 
-  //Get atl com object from track.
-  CComPtr<IMediaStreamTrack> proxy;
-  HRESULT hr = disp->QueryInterface(IID_PPV_ARGS(&proxy));
-  if (FAILED(hr))
-    return hr;
-
 	//Get atl com object from track.
-	CComPtr<ITrackAccess> accessor;
-	hr = proxy->QueryInterface(IID_PPV_ARGS(&accessor));
+	CComPtr<ITrackAccess> proxy;
+  HRESULT hr = disp->QueryInterface(IID_PPV_ARGS(&proxy));
 	if (FAILED(hr))
 		return hr;
+
+  //Get track
+  mediaTrack = proxy->GetTrack();
 	
 	//Convert to video
-	webrtc::VideoTrackInterface* videoTrack = reinterpret_cast<webrtc::VideoTrackInterface*>(accessor->GetTrack().get());
+	webrtc::VideoTrackInterface* videoTrack = reinterpret_cast<webrtc::VideoTrackInterface*>(mediaTrack.get());
 
 	if (!videoTrack)
+  {
+    //Remove track
+    mediaTrack.release();
+    //Error
 		return E_INVALIDARG;
+  }
 
 	//Add us as video 
 	rtc::VideoSinkWants wanted;

@@ -120,9 +120,8 @@ public:
 		return  m_spInPlaceSite->GetWindow(&hwndParent);
 	}
 
-	void FinalRelease()
-	{
-	}
+	void FinalRelease();
+	
 
 	STDMETHOD(setTrack) (VARIANT track);
 	STDMETHOD(get_videoWidth)(SHORT* pVal)
@@ -138,7 +137,7 @@ public:
 	STDMETHODIMP put_onresize(VARIANT handler) { return MarshalCallback(onresize, handler); }
 
 private:
-	
+  rtc::scoped_refptr<webrtc::MediaStreamTrackInterface> mediaTrack;
 	std::shared_ptr<webrtc::VideoFrame> frames[2];
 	std::mutex mutex;
 	bool background = 0;
