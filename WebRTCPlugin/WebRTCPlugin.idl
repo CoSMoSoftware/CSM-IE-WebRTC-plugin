@@ -19,7 +19,8 @@ interface IWebRTCProxy : IDispatch{
   [id(1), local] HRESULT createPeerConnection ([in] VARIANT configuration, [out, retval] IUnknown** pc    );
   [id(2), local] HRESULT createLocalAudioTrack([in] VARIANT constraints,   [out, retval] IUnknown** track );
   [id(3), local] HRESULT createLocalVideoTrack([in] VARIANT constraints,   [out, retval] IUnknown** track );
-  [id(4), local] HRESULT parseIceCandidate(    [in] VARIANT candidate,     [out, retval] VARIANT* parsed  );
+  [id(4), local] HRESULT parseIceCandidate    ([in] VARIANT candidate,     [out, retval] VARIANT* parsed  );
+  [id(5), local] HRESULT enumerateDevices     ([out, retval] VARIANT* devices);
 };
 
 [

@@ -37,6 +37,8 @@ HRESULT WebRTCProxy::FinalConstruct()
     rtc::InitializeSSL();
     rtc::InitRandom(rtc::Time());
 
+  taskQueueFactory        = webrtc::CreateDefaultTaskQueueFactory();
+
 	signalingThread         = std::shared_ptr<rtc::Thread>(rtc::Thread::Create().release());
 	eventThread             = std::shared_ptr<rtc::Thread>(rtc::Thread::Create().release());
 	workingAndNetworkThread = std::shared_ptr<rtc::Thread>(rtc::Thread::CreateWithSocketServer().release());
@@ -47,6 +49,23 @@ HRESULT WebRTCProxy::FinalConstruct()
 
 	if (!signalingThread->Start() || !eventThread->Start() || !workingAndNetworkThread->Start())
 		return false;
+
+  //Initialize things on working thread thread
+  auto ret = workingAndNetworkThread->Invoke<bool>(RTC_FROM_HERE, [this]() {
+    //Create audio module
+    adm = webrtc::AudioDeviceModule::Create(webrtc::AudioDeviceModule::kPlatformDefaultAudio, taskQueueFactory.get());
+
+    //Check
+    if (!adm)
+    {
+      RTC_LOG(INFO) << "Audio Device Module creation failed.";
+      return false;
+    }
+
+    RTC_LOG(INFO) << "Audio Device Module created";
+    adm->Init();
+    return true;
+  });
 
 	//Initialize things on event thread
 	eventThread->Invoke<void>(RTC_FROM_HERE, []() {
@@ -62,7 +81,7 @@ HRESULT WebRTCProxy::FinalConstruct()
       workingAndNetworkThread.get(),  // network_thread
       workingAndNetworkThread.get(),  // worker_thread
       signalingThread.get(),          // signaling_thread
-      NULL,  // AudioDeviceModule
+      adm,                            // AudioDeviceModule
       webrtc::CreateBuiltinAudioEncoderFactory(),
       webrtc::CreateBuiltinAudioDecoderFactory(),
       webrtc::CreateBuiltinVideoEncoderFactory(),
@@ -82,7 +101,8 @@ void WebRTCProxy::FinalRelease()
 {
   //Remove factory
   peer_connection_factory_ = nullptr;
-  // video_capturer_.release();
+  if (adm && adm->Initialized())
+    adm->Terminate();
 }
 
 STDMETHODIMP WebRTCProxy::createPeerConnection(VARIANT variant, IUnknown** peerConnection)
@@ -267,17 +287,31 @@ STDMETHODIMP WebRTCProxy::createLocalVideoTrack(VARIANT constraints, IUnknown** 
   std::unique_ptr<webrtc::VideoCaptureModule::DeviceInfo>
       info(webrtc::VideoCaptureFactory::CreateDeviceInfo());
 
+  //Get constrains
+  JSObject obj(constraints);
+
+  //If it has the deviceId
+  auto deviceId = obj.GetStringProperty(L"deviceId");
+
+  //Check length of the id to ensure it is valid
+  bool hasDeviceId = deviceId.length()>0;
+
   //pick the first valid device
   Source* source = nullptr;
   const uint32_t kSize = 1024;
   char name[kSize] = { 0 };
   char id[kSize] = { 0 };
   int num_devices = info->NumberOfDevices();
-  for (int i = 0; i < num_devices; ++i) {
-      if (info->GetDeviceName(i, name, kSize, id, kSize) != -1) {
-          // Here i will just take the first valid one arbitrarily
+  for (int i = 0; i < num_devices; ++i) 
+  {
+      if (info->GetDeviceName(i, name, kSize, id, kSize) != -1) 
+      {
+        //Match device id or first found
+        if (!hasDeviceId || strcmp(id,deviceId)==0)
+        {
           source = new Source(Source::DEVICE, i, name, id);
           break;
+        }
       }
   }
 
@@ -374,4 +408,112 @@ STDMETHODIMP WebRTCProxy::parseIceCandidate(VARIANT candidate, VARIANT* parsed)
 
 	//Parsed ok
 	return S_OK;
+}
+
+STDMETHODIMP WebRTCProxy::enumerateDevices(VARIANT* devices)
+{
+  CComSafeArray<VARIANT> args;
+  
+  //Get info for all video devices
+  std::unique_ptr<webrtc::VideoCaptureModule::DeviceInfo> info(webrtc::VideoCaptureFactory::CreateDeviceInfo());
+
+  //If any
+  if (info)
+  {
+    const uint32_t kSize = 1024;
+    char name[kSize] = { 0 };
+    char id[kSize] = { 0 };
+
+    // List the names of all devices
+    int num_devices = info->NumberOfDevices();
+    RTC_LOG(INFO) << num_devices << " video recording devices detected.";
+
+    for (int i = 0; i < num_devices; ++i)
+    {
+      //Get device id and name
+      if (info->GetDeviceName(i, name, kSize, id, kSize) != -1)
+      {
+        CComSafeArray<VARIANT> device(3);
+        device.SetAt(0, variant_t(id));
+        device.SetAt(1, variant_t(name));
+        device.SetAt(2, variant_t("videoinput"));
+
+        // Initialize the variant
+        VARIANT var;
+        VariantInit(&var);
+        var.vt = VT_ARRAY | VT_VARIANT;
+        var.parray = device.Detach();
+
+        //Add to devices
+        args.Add(var);
+
+      }
+    }
+  }
+
+  if (adm)
+  {
+    char name[webrtc::kAdmMaxDeviceNameSize] = { 0 };
+    char id[webrtc::kAdmMaxGuidSize] = { 0 };
+
+    //Get number of devices
+    uint16_t num = adm->RecordingDevices();
+
+    // DEVICES
+    for (int i = 0; i < num; ++i)
+    {
+      //Get device id and name
+      if (adm->RecordingDeviceName(i, name, id) != -1)
+      {
+        CComSafeArray<VARIANT> device(3);
+        device.SetAt(0, variant_t(id));
+        device.SetAt(1, variant_t(name));
+        device.SetAt(2, variant_t("audioinput"));
+
+        // Initialize the variant
+        VARIANT var;
+        VariantInit(&var);
+        var.vt = VT_ARRAY | VT_VARIANT;
+        var.parray = device.Detach();
+
+        //Add to devices
+        args.Add(var);
+      }
+    }
+
+    //Get number of devices
+    num = adm->PlayoutDevices();
+
+    // DEVICES
+    for (int i = 0; i < num; ++i)
+    {
+      //Get device id and name
+      if (adm->PlayoutDeviceName(i, name, id) != -1)
+      {
+      
+        CComSafeArray<VARIANT> device(3);
+        device.SetAt(0, variant_t(id));
+        device.SetAt(1, variant_t(name));
+        device.SetAt(2, variant_t("audiooutput"));
+
+        // Initialize the variant
+        VARIANT var;
+        VariantInit(&var);
+        var.vt = VT_ARRAY | VT_VARIANT;
+        var.parray = device.Detach();
+
+        //Add to devices
+        args.Add(var);
+
+      }
+    }
+  }
+  
+  // Initialize the variant
+  VariantInit(devices);
+  devices->vt = VT_ARRAY | VT_VARIANT;
+  devices->parray = args.Detach();
+
+  //Parsed ok
+  return S_OK;
 }

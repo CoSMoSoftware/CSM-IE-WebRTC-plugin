@@ -12,7 +12,7 @@
 using namespace ATL;
 
 #include "api/peer_connection_interface.h"
-
+#include "api/task_queue/default_task_queue_factory.h"
 
 // WebRTCProxy
 class ATL_NO_VTABLE WebRTCProxy :
@@ -100,6 +100,7 @@ public:
   STDMETHOD(createLocalAudioTrack)(VARIANT constraints, IUnknown** track);
   STDMETHOD(createLocalVideoTrack)(VARIANT constraints, IUnknown** track);
   STDMETHOD(parseIceCandidate)(VARIANT candidate, VARIANT* parsed);
+  STDMETHOD(enumerateDevices)(VARIANT* devices);
 
   static std::shared_ptr<rtc::Thread>& GetEventThread() {	  return eventThread; }
   
@@ -110,9 +111,10 @@ private:
   static std::shared_ptr<rtc::Thread> workingAndNetworkThread;
 
   // WebRTC objects variables
+  std::unique_ptr<webrtc::TaskQueueFactory> taskQueueFactory;
   rtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface>  peer_connection_factory_;
-  // std::unique_ptr<cricket::VideoCapturer> video_capturer_;
-
+  rtc::scoped_refptr<webrtc::AudioDeviceModule> adm;
+  
 };
 
 OBJECT_ENTRY_AUTO(__uuidof(WebRTCProxy), WebRTCProxy)
