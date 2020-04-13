@@ -76,7 +76,7 @@ HRESULT WebRTCProxy::FinalConstruct()
   }
 
   //Create peer connection factory
-  peer_connection_factory_ =
+  peerconnectionFactory =
     webrtc::CreatePeerConnectionFactory(
       workingAndNetworkThread.get(),  // network_thread
       workingAndNetworkThread.get(),  // worker_thread
@@ -91,7 +91,7 @@ HRESULT WebRTCProxy::FinalConstruct()
     ).release();
 
   //Check
-  if (!peer_connection_factory_)
+  if (!peerconnectionFactory)
     return S_FALSE;
 
   return S_OK;
@@ -100,9 +100,14 @@ HRESULT WebRTCProxy::FinalConstruct()
 void WebRTCProxy::FinalRelease()
 {
   //Remove factory
-  peer_connection_factory_ = nullptr;
+  peerconnectionFactory.release();
   if (adm && adm->Initialized())
-    adm->Terminate();
+  {
+    auto ret = workingAndNetworkThread->Invoke<bool>(RTC_FROM_HERE, [this]() {
+      return adm->Terminate();
+    });
+    adm.release();
+  }
 }
 
 STDMETHODIMP WebRTCProxy::createPeerConnection(VARIANT variant, IUnknown** peerConnection)
@@ -203,7 +208,7 @@ STDMETHODIMP WebRTCProxy::createPeerConnection(VARIANT variant, IUnknown** peerC
   configuration.sdp_semantics = webrtc::SdpSemantics::kUnifiedPlan;
 
   //Create peerconnection object, it will call the AddRef inside as it gets a ref to the observer
-  rtc::scoped_refptr<webrtc::PeerConnectionInterface> pci = peer_connection_factory_->CreatePeerConnection(
+  rtc::scoped_refptr<webrtc::PeerConnectionInterface> pci = peerconnectionFactory->CreatePeerConnection(
     configuration,
     NULL, // allocator
     NULL, // cert_generator
@@ -236,14 +241,14 @@ STDMETHODIMP WebRTCProxy::createLocalAudioTrack(VARIANT constraints, IUnknown** 
 {
   const cricket::AudioOptions options;
   //Create audio source
-  auto audioSource = peer_connection_factory_->CreateAudioSource(options);
+  auto audioSource = peerconnectionFactory->CreateAudioSource(options);
 
   //Ensure it is created
   if (!audioSource)
     return E_UNEXPECTED;
 
   //Create track
-  rtc::scoped_refptr<webrtc::MediaStreamTrackInterface> audioTrack = peer_connection_factory_->CreateAudioTrack("audio", audioSource);
+  rtc::scoped_refptr<webrtc::MediaStreamTrackInterface> audioTrack = peerconnectionFactory->CreateAudioTrack("audio", audioSource);
 
   //Ensure it is created
   if (!audioTrack)
@@ -326,7 +331,7 @@ STDMETHODIMP WebRTCProxy::createLocalVideoTrack(VARIANT constraints, IUnknown** 
       return E_UNEXPECTED;
 
   // Now create the track in libwebrtc
-  auto videoTrack = peer_connection_factory_->CreateVideoTrack(
+  auto videoTrack = peerconnectionFactory->CreateVideoTrack(
       "video-" + std::to_string(source->type), videoSourceA);
 
   //Ensure it is created

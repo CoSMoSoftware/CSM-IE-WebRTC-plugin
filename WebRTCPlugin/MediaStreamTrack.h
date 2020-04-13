@@ -122,6 +122,8 @@ public:
 
   STDMETHOD(get_id)(VARIANT* val)
   {
+  if (!track)
+      return E_INVALIDARG;
     variant_t id = track->id().c_str();
     *val = id;
     return S_OK;
@@ -129,6 +131,8 @@ public:
 
   STDMETHOD(get_kind)(VARIANT* val)
   {
+    if (!track)
+      return E_INVALIDARG;
     variant_t kind = track->kind().c_str();
     *val = kind;
     return S_OK;
@@ -136,6 +140,8 @@ public:
 
   STDMETHOD(get_label)(VARIANT* val)
   {
+    if (!track)
+      return E_INVALIDARG;
     variant_t label = this->label.c_str();
     *val = label;
     return S_OK;
@@ -143,6 +149,8 @@ public:
 
   STDMETHOD(get_state)(VARIANT* val)
   {
+    if (!track)
+      return E_INVALIDARG;
     variant_t state = track->state() == webrtc::MediaStreamTrackInterface::kLive ? "live" : "ended";
     *val = state;
     return S_OK;
@@ -150,16 +158,29 @@ public:
 
   STDMETHOD(get_enabled)(VARIANT* val)
   {
+    if (!track)
+      return E_INVALIDARG;
     V_BOOL(val) = track->enabled() ? VARIANT_TRUE : VARIANT_FALSE;
     return S_OK;
   }
 
   STDMETHOD(put_enabled)(VARIANT val)
   {
+    if (!track)
+      return E_INVALIDARG;
     track->set_enabled(V_BOOL(&val)==VARIANT_TRUE);
     return S_OK;
   }
-  
+
+  STDMETHOD(stop)()
+  {
+    if (track)
+    {
+      track->set_enabled(false);
+      track = nullptr;
+    }
+    return S_OK;
+  }
 private:
   std::string label;
   rtc::scoped_refptr<webrtc::MediaStreamTrackInterface> track;

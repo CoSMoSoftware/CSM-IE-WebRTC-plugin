@@ -88,6 +88,7 @@ interface IMediaStreamTrack : IDispatch{
   [propget, id(4), local] HRESULT state(  [out, retval] VARIANT* val );
   [propget, id(5), local] HRESULT enabled([out, retval] VARIANT* val );
   [propput, id(5), local] HRESULT enabled([in]          VARIANT  val );
+  [id(6), local] HRESULT stop();
 };
 
 [

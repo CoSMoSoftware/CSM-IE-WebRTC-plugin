@@ -112,7 +112,7 @@ private:
 
   // WebRTC objects variables
   std::unique_ptr<webrtc::TaskQueueFactory> taskQueueFactory;
-  rtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface>  peer_connection_factory_;
+  rtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface>  peerconnectionFactory;
   rtc::scoped_refptr<webrtc::AudioDeviceModule> adm;
   
 };
