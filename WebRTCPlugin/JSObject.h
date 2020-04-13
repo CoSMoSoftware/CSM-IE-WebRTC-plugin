@@ -38,6 +38,40 @@ inline int64_t GetInt(VARIANT* variant, int64_t default)
   return default;
 }
 
+
+inline double GetDouble(VARIANT* variant, int64_t default)
+{
+  switch (variant->vt)
+  {
+    case VT_I1:
+      return V_I1(variant);
+    case VT_I2:
+      return V_I2(variant);
+    case VT_I4:
+      return V_I4(variant);
+    case VT_UI1:
+      return V_UI1(variant);
+    case VT_UI2:
+      return V_UI2(variant);
+    case VT_INT:
+      return V_INT(variant);
+    case VT_UI4:
+      return V_UI4(variant);
+    case VT_UINT:
+      return V_UINT(variant);
+    case VT_I8:
+      return V_I8(variant);
+    case VT_UI8:
+      return V_UI8(variant);
+    case VT_R4:
+      return V_R4(variant);
+    case VT_R8:
+      return V_R8(variant);
+  }
+  return default;
+}
+
+
 class JSObject
 {
 public:
@@ -91,6 +125,13 @@ public:
     return GetInt(&prop, default);
   }
 
+  double GetDoubleProperty(const std::wstring& name, int64_t default = 0)
+  {
+    auto prop = GetProperty(name);
+    //Get property
+    return GetDouble(&prop, default);
+  }
+
   bool GetBooleanProperty(const std::wstring& name, bool default = false) {
     auto prop = GetProperty(name);
     //Get property
@@ -113,6 +154,57 @@ public:
         names.push_back(std::wstring(memberName));
     }
     return names;
+  }
+
+  std::vector<JSObject> GetPropertyObjects()
+  {
+
+    std::vector<JSObject> objects;
+
+    DISPID dispId = DISPID_STARTENUM;
+    while (dispatchEx->GetNextDispID(fdexEnumAll, dispId, &dispId) != S_FALSE)
+    {
+      if (dispId < 0)
+        continue;
+      CComBSTR memberName;
+      CComVariant result;
+      CComExcepInfo exceptionInfo;
+      DISPPARAMS params = { 0 };
+      if (SUCCEEDED(dispatchEx->InvokeEx(dispId, LOCALE_USER_DEFAULT, DISPATCH_PROPERTYGET, &params, &result, &exceptionInfo, NULL)))
+          objects.emplace_back(result);
+    }
+    return std::move(objects);
+  }
+
+  std::vector<CComVariant> GetPropertyArray(const std::wstring& name)
+  {
+    std::vector<CComVariant> variants;
+    //Get property for name
+    auto prop = GetProperty(name);
+
+    //Check type
+    if (prop.vt == VT_DISPATCH)
+    {
+
+      //Get js object
+      JSObject array(prop);
+
+      //If got it
+      if (!array.isNull())
+      {
+        //Get length
+        int length = array.GetIntegerProperty(L"length", 0);
+        //Get all 
+        for (int i = 0; i < length; ++i)
+        {
+          //Get stream
+          auto element = array.GetProperty(std::to_wstring(i));
+          //Add it
+          variants.emplace_back(element);
+        }
+      }
+    }
+    return  std::move(variants);
   }
 
   bool isNull() {

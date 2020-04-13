@@ -10,6 +10,74 @@
 #include "RTPTransceiver.h"
 #include "DataChannel.h"
 
+
+
+static webrtc::RtpTransceiverInit parseTransceiverInit(VARIANT &init)
+{
+  webrtc::RtpTransceiverInit transceiverInit;
+
+  JSObject js(init);
+
+  if (!js.isNull())
+  {
+    _bstr_t direction = js.GetStringProperty(L"direction", "sendrecv");
+
+    if (strcmp(direction, "sendrecv") == 0)
+      transceiverInit.direction = webrtc::RtpTransceiverDirection::kSendRecv;
+    else if (strcmp(direction, "sendonly") == 0)
+      transceiverInit.direction = webrtc::RtpTransceiverDirection::kSendOnly;
+    else if (strcmp(direction, "recvonly") == 0)
+      transceiverInit.direction = webrtc::RtpTransceiverDirection::kRecvOnly;
+    else if (strcmp(direction, "inactive") == 0)
+      transceiverInit.direction = webrtc::RtpTransceiverDirection::kInactive;
+
+    //Get property as array
+    auto streams = js.GetPropertyArray(L"streams");
+
+    //For each stream
+    for (auto& stream : streams)
+    {
+      //Get js object
+      JSObject streamObj(stream);
+      //If valid
+      if (!streamObj.isNull() || streamObj.HasProperty(L"id"))
+      {
+        //Get id
+        auto id = streamObj.GetStringProperty(L"id");
+        //Add 
+        transceiverInit.stream_ids.push_back(std::string(id));
+      }
+    }
+
+    //Get property as array
+    auto sendEncodings = js.GetPropertyArray(L"sendEncodings");
+
+    //For each stream
+    for (auto& encoding : sendEncodings)
+    {
+      //Get js object
+      JSObject encodingObj(encoding);
+      //If valid
+      if (!encodingObj.isNull())
+      {
+        webrtc::RtpEncodingParameters params;
+        //Fill values
+        params.rid = encodingObj.GetStringProperty(L"rid");
+        params.active = encodingObj.GetBooleanProperty(L"active");
+        if (encodingObj.HasProperty(L"maxBitrate"))
+          params.max_bitrate_bps = encodingObj.GetIntegerProperty(L"maxBitrate");
+        if (encodingObj.HasProperty(L"scaleResolutionDownBy"))
+          params.scale_resolution_down_by = encodingObj.GetDoubleProperty(L"scaleResolutionDownBy");
+
+        //Append send encoding params
+        transceiverInit.send_encodings.push_back(params);
+      }
+    }
+  }
+
+  return std::move(transceiverInit);
+}
+
 class GetStatsCallback :
   public rtc::RefCountedObject<CallbackDispatcher<webrtc::RTCStatsCollectorCallback>>
 {
@@ -464,8 +532,8 @@ STDMETHODIMP RTCPeerConnection::addTransceiverTrack(VARIANT track, VARIANT init,
   if (FAILED(hr))
     return hr;
 
-  //TODO: parse init
-  webrtc::RtpTransceiverInit transceiverInit;
+  //Parse init
+  webrtc::RtpTransceiverInit transceiverInit = parseTransceiverInit(init);
 
   //Add track
   auto result = pc->AddTransceiver(proxy->GetTrack(), transceiverInit);
@@ -521,8 +589,8 @@ STDMETHODIMP RTCPeerConnection::addTransceiverKind(VARIANT kind, VARIANT init, I
     //Error
     return E_INVALIDARG;
 
-  //TODO: parse init
-  webrtc::RtpTransceiverInit transceiverInit;
+  //Parse init
+  webrtc::RtpTransceiverInit transceiverInit = parseTransceiverInit(init);
 
   //Add transceiver
   auto result = pc->AddTransceiver(mediaType, transceiverInit);
