@@ -156,6 +156,11 @@ public:
     return names;
   }
 
+  JSObject GetObjectProperty(const std::wstring& name)
+  {
+    return std::move(JSObject(GetProperty(name)));
+  }
+
   std::vector<JSObject> GetPropertyObjects()
   {
 
@@ -176,7 +181,7 @@ public:
     return std::move(objects);
   }
 
-  std::vector<CComVariant> GetPropertyArray(const std::wstring& name)
+  std::vector<CComVariant> GetArrayProperty(const std::wstring& name)
   {
     std::vector<CComVariant> variants;
     //Get property for name
@@ -205,6 +210,37 @@ public:
       }
     }
     return  std::move(variants);
+  }
+
+  std::vector<JSObject> GetArrayObjectProperty(const std::wstring& name)
+  {
+    std::vector<JSObject> objects;
+    //Get property for name
+    auto prop = GetProperty(name);
+
+    //Check type
+    if (prop.vt == VT_DISPATCH)
+    {
+
+      //Get js object
+      JSObject array(prop);
+
+      //If got it
+      if (!array.isNull())
+      {
+        //Get length
+        int length = array.GetIntegerProperty(L"length", 0);
+        //Get all 
+        for (int i = 0; i < length; ++i)
+        {
+          //Get stream
+          auto element = array.GetProperty(std::to_wstring(i));
+          //Add it
+          objects.emplace_back(element);
+        }
+      }
+    }
+    return  std::move(objects);
   }
 
   bool isNull() {

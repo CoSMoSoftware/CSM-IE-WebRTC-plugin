@@ -32,42 +32,38 @@ static webrtc::RtpTransceiverInit parseTransceiverInit(VARIANT &init)
       transceiverInit.direction = webrtc::RtpTransceiverDirection::kInactive;
 
     //Get property as array
-    auto streams = js.GetPropertyArray(L"streams");
+    auto streams = js.GetArrayObjectProperty(L"streams");
 
     //For each stream
     for (auto& stream : streams)
     {
-      //Get js object
-      JSObject streamObj(stream);
       //If valid
-      if (!streamObj.isNull() || streamObj.HasProperty(L"id"))
+      if (!stream.isNull() || stream.HasProperty(L"id"))
       {
         //Get id
-        auto id = streamObj.GetStringProperty(L"id");
+        auto id = stream.GetStringProperty(L"id");
         //Add 
         transceiverInit.stream_ids.push_back(std::string(id));
       }
     }
 
     //Get property as array
-    auto sendEncodings = js.GetPropertyArray(L"sendEncodings");
+    auto sendEncodings = js.GetArrayObjectProperty(L"sendEncodings");
 
     //For each stream
     for (auto& encoding : sendEncodings)
     {
-      //Get js object
-      JSObject encodingObj(encoding);
       //If valid
-      if (!encodingObj.isNull())
+      if (!encoding.isNull())
       {
         webrtc::RtpEncodingParameters params;
         //Fill values
-        params.rid = encodingObj.GetStringProperty(L"rid");
-        params.active = encodingObj.GetBooleanProperty(L"active");
-        if (encodingObj.HasProperty(L"maxBitrate"))
-          params.max_bitrate_bps = encodingObj.GetIntegerProperty(L"maxBitrate");
-        if (encodingObj.HasProperty(L"scaleResolutionDownBy"))
-          params.scale_resolution_down_by = encodingObj.GetDoubleProperty(L"scaleResolutionDownBy");
+        params.rid = encoding.GetStringProperty(L"rid");
+        params.active = encoding.GetBooleanProperty(L"active");
+        if (encoding.HasProperty(L"maxBitrate"))
+          params.max_bitrate_bps = encoding.GetIntegerProperty(L"maxBitrate");
+        if (encoding.HasProperty(L"scaleResolutionDownBy"))
+          params.scale_resolution_down_by = encoding.GetDoubleProperty(L"scaleResolutionDownBy");
 
         //Append send encoding params
         transceiverInit.send_encodings.push_back(params);
