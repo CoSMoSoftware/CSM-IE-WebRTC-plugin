@@ -27,6 +27,25 @@ std::shared_ptr<rtc::Thread> WebRTCProxy::signalingThread;
 std::shared_ptr<rtc::Thread> WebRTCProxy::eventThread;
 std::shared_ptr<rtc::Thread> WebRTCProxy::workingAndNetworkThread;
 
+std::string CreateUUID()
+{
+  UUID uuid = { 0 };
+  std::string guid;
+
+  // Create uuid or load from a string by UuidFromString() function
+  ::UuidCreate(&uuid);
+
+  // If you want to convert uuid to wstring, use UuidToString() function
+  RPC_CSTR szUuid = NULL;
+  if (::UuidToStringA(&uuid, &szUuid) == RPC_S_OK)
+  {
+    guid = (char*)szUuid;
+    ::RpcStringFreeA(&szUuid);
+  }
+
+  return guid;
+}
+
 // WebRTCProxy
 HRESULT WebRTCProxy::FinalConstruct()
 {
@@ -88,7 +107,7 @@ HRESULT WebRTCProxy::FinalConstruct()
       webrtc::CreateBuiltinVideoDecoderFactory(),
       NULL,  // audio_mixer
       NULL   // audio_processing
-    ).release();
+    );
 
   //Check
   if (!peerconnectionFactory)
@@ -100,14 +119,13 @@ HRESULT WebRTCProxy::FinalConstruct()
 void WebRTCProxy::FinalRelease()
 {
   //Remove factory
-  peerconnectionFactory.release();
-  if (adm && adm->Initialized())
-  {
-    auto ret = workingAndNetworkThread->Invoke<bool>(RTC_FROM_HERE, [this]() {
-      return adm->Terminate();
+  peerconnectionFactory = nullptr;
+  if (adm)
+    workingAndNetworkThread->Invoke<void>(RTC_FROM_HERE, [this]() {
+        if (adm->Initialized())
+          adm->Terminate();
+        adm = nullptr;
     });
-    adm.release();
-  }
 }
 
 STDMETHODIMP WebRTCProxy::createPeerConnection(VARIANT variant, IUnknown** peerConnection)
@@ -248,7 +266,7 @@ STDMETHODIMP WebRTCProxy::createLocalAudioTrack(VARIANT constraints, IUnknown** 
     return E_UNEXPECTED;
 
   //Create track
-  rtc::scoped_refptr<webrtc::MediaStreamTrackInterface> audioTrack = peerconnectionFactory->CreateAudioTrack("audio", audioSource);
+  rtc::scoped_refptr<webrtc::MediaStreamTrackInterface> audioTrack = peerconnectionFactory->CreateAudioTrack(CreateUUID(), audioSource);
 
   //Ensure it is created
   if (!audioTrack)
@@ -281,16 +299,15 @@ STDMETHODIMP WebRTCProxy::createLocalAudioTrack(VARIANT constraints, IUnknown** 
 STDMETHODIMP WebRTCProxy::createLocalVideoTrack(VARIANT constraints, IUnknown** track)
 {
 
-  rtc::scoped_refptr<VideoSourceAdapter> videoSourceA
-      = new rtc::RefCountedObject<VideoSourceAdapter>();
+  //Initialize on signaling thread
+  rtc::scoped_refptr<VideoSourceAdapter> videoSourceAdapter = new rtc::RefCountedObject<VideoSourceAdapter>();
 
   //Ensure it is created
-  if (!videoSourceA)
+  if (!videoSourceAdapter)
       return E_UNEXPECTED;
 
   //Get info for all devices
-  std::unique_ptr<webrtc::VideoCaptureModule::DeviceInfo>
-      info(webrtc::VideoCaptureFactory::CreateDeviceInfo());
+  std::unique_ptr<webrtc::VideoCaptureModule::DeviceInfo> info(webrtc::VideoCaptureFactory::CreateDeviceInfo());
 
   //Get constrains
   JSObject obj(constraints);
@@ -323,16 +340,22 @@ STDMETHODIMP WebRTCProxy::createLocalVideoTrack(VARIANT constraints, IUnknown** 
   if (!source)
       return E_UNEXPECTED;
 
-  if (!videoSourceA->Init(*source))
-      return E_UNEXPECTED;
+  //Start on signaling thread
+  auto ret = signalingThread->Invoke<bool>(RTC_FROM_HERE, [&]() {
+    webrtc::VideoCaptureCapability requested_cap;
+    //Iint adapter
+    if (!videoSourceAdapter->Init(*source))
+      return false;
+    //Start capturing
+    return videoSourceAdapter->Start(requested_cap) != webrtc::MediaSourceInterface::kEnded;
+  });
 
-  webrtc::VideoCaptureCapability requested_cap;
-  if (videoSourceA->Start(requested_cap) == webrtc::MediaSourceInterface::kEnded)
+  //If failed
+  if (!ret)
       return E_UNEXPECTED;
 
   // Now create the track in libwebrtc
-  auto videoTrack = peerconnectionFactory->CreateVideoTrack(
-      "video-" + std::to_string(source->type), videoSourceA);
+  auto videoTrack = peerconnectionFactory->CreateVideoTrack(CreateUUID(), videoSourceAdapter);
 
   //Ensure it is created
   if (!videoTrack)

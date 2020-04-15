@@ -106,9 +106,9 @@ STDMETHODIMP RTPSender::setParameters(VARIANT params)
       {
         parameter.rid     = encoding.GetStringProperty(L"rid");
         parameter.active  = encoding.GetBooleanProperty(L"active",true);
-        if (encoding.HasProperty(L"maxBitrate"))
+        if (encoding.HasNotNullProperty(L"maxBitrate"))
           parameter.max_bitrate_bps = encoding.GetIntegerProperty(L"maxBitrate");
-        if (encoding.HasProperty(L"scaleResolutionDownBy"))
+        if (encoding.HasNotNullProperty(L"scaleResolutionDownBy"))
           parameter.scale_framerate_down_by = encoding.GetDoubleProperty(L"scaleResolutionDownBy");
       }
 
@@ -128,7 +128,7 @@ STDMETHODIMP RTPSender::setParameters(VARIANT params)
       if (!headerExtension.isNull())
       {
         parameter.uri       = headerExtension.GetStringProperty(L"uri");
-        parameter.id        = headerExtension.GetIntegerProperty(L"active");
+        parameter.id        = headerExtension.GetIntegerProperty(L"id");
         parameter.encrypt   = headerExtension.GetBooleanProperty(L"encrypted",false);
       }
 
@@ -155,27 +155,27 @@ STDMETHODIMP RTPSender::setParameters(VARIANT params)
         auto type = mimeType.substr(0, middle);
         //Check tipe
         if (type.compare("video")==0)
-          parameter.kind = cricket::MEDIA_TYPE_AUDIO;
-        else if (type.compare("audio") == 0)
           parameter.kind = cricket::MEDIA_TYPE_VIDEO;
+        else if (type.compare("audio") == 0)
+          parameter.kind = cricket::MEDIA_TYPE_AUDIO;
         //Set name
         parameter.name = middle != std::string::npos ? mimeType.substr(middle + 1) : "";
-        if (codec.HasProperty(L"maxBiclockRatetrate"))
+        if (codec.HasNotNullProperty(L"clockRate"))
           parameter.clock_rate = codec.GetIntegerProperty(L"clockRate");
 
-        if (codec.HasProperty(L"sdpFmtpLine"))
+        if (codec.HasNotNullProperty(L"sdpFmtpLine"))
         {
           //Get line
           std::string sdpFmtpLine = codec.GetStringProperty(L"sdpFmtpLine");
 
           //Tokenize
           auto start = 0U;
-          while (start <= sdpFmtpLine.length())
+          while (start < sdpFmtpLine.length())
           {
             //Find delimiter
-            auto end = sdpFmtpLine.find(";");
+            auto end = sdpFmtpLine.find(";", start);
             //Get param until delimiter or end of string
-            auto fmtp = sdpFmtpLine.substr(start, end != std::string::npos ? end - start : std::string::npos);
+            auto fmtp = sdpFmtpLine.substr(start, end - start);
 
             //Find key/val separator
             auto middle = fmtp.find("=");
@@ -190,7 +190,7 @@ STDMETHODIMP RTPSender::setParameters(VARIANT params)
             parameter.parameters.emplace(key, val);
 
             //Move next
-            start = end + 1;
+            start = end != std::string::npos ? end + 1 : std::string::npos;
           }
 
 

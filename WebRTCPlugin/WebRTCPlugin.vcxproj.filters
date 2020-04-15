@@ -170,11 +170,9 @@
     <None Include="RTPTransceiver.rgs">
       <Filter>Resource Files</Filter>
     </None>
-    <None Include="RTPTransceiver.htm" />
     <None Include="RTPReceiver.rgs">
       <Filter>Resource Files</Filter>
     </None>
-    <None Include="RTPReceiver.htm" />
   </ItemGroup>
   <ItemGroup>
     <Midl Include="WebRTCPlugin.idl">

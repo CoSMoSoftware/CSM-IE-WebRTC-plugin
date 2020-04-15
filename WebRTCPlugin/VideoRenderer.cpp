@@ -30,7 +30,7 @@ void VideoRenderer::FinalRelease()
     videoTrack->RemoveSink(this);
 
     //Remove track
-    mediaTrack.release();
+    mediaTrack = nullptr;
   }
 }
 
@@ -179,7 +179,7 @@ STDMETHODIMP VideoRenderer::setTrack(VARIANT track)
     videoTrack->RemoveSink(this);
 
     //Remove track
-    mediaTrack.release();
+    mediaTrack = nullptr;
   }
 
   //IF it is null
@@ -211,7 +211,7 @@ STDMETHODIMP VideoRenderer::setTrack(VARIANT track)
 	if (!videoTrack)
   {
     //Remove track
-    mediaTrack.release();
+    mediaTrack = nullptr;
     //Error
 		return E_INVALIDARG;
   }

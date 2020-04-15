@@ -38,7 +38,7 @@ static webrtc::RtpTransceiverInit parseTransceiverInit(VARIANT &init)
     for (auto& stream : streams)
     {
       //If valid
-      if (!stream.isNull() || stream.HasProperty(L"id"))
+      if (!stream.isNull() || stream.HasNotNullProperty(L"id"))
       {
         //Get id
         auto id = stream.GetStringProperty(L"id");
@@ -60,9 +60,9 @@ static webrtc::RtpTransceiverInit parseTransceiverInit(VARIANT &init)
         //Fill values
         params.rid = encoding.GetStringProperty(L"rid");
         params.active = encoding.GetBooleanProperty(L"active");
-        if (encoding.HasProperty(L"maxBitrate"))
+        if (encoding.HasNotNullProperty(L"maxBitrate"))
           params.max_bitrate_bps = encoding.GetIntegerProperty(L"maxBitrate");
-        if (encoding.HasProperty(L"scaleResolutionDownBy"))
+        if (encoding.HasNotNullProperty(L"scaleResolutionDownBy"))
           params.scale_resolution_down_by = encoding.GetDoubleProperty(L"scaleResolutionDownBy");
 
         //Append send encoding params

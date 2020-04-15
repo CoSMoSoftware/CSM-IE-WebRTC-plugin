@@ -93,6 +93,21 @@ public:
     return dispId!= DISPID_UNKNOWN;
   }
 
+  bool HasNotNullProperty(const std::wstring& name) const
+  {
+    HRESULT hr = E_NOTIMPL;
+    DISPID dispId = DISPID_UNKNOWN;
+    CComVariant result;
+    CComExcepInfo exceptionInfo;
+    DISPPARAMS params = { 0 };
+
+    hr = dispatchEx->GetDispID(CComBSTR(name.c_str()), fdexNameEnsure | fdexNameCaseSensitive | 0x10000000, &dispId);
+    if (SUCCEEDED(hr) && dispId != DISPID_UNKNOWN)
+      hr = dispatchEx->InvokeEx(dispId, LOCALE_USER_DEFAULT, DISPATCH_PROPERTYGET, &params, &result, &exceptionInfo, NULL);
+
+    return result.vt>1;
+  }
+
 
   CComVariant GetProperty(const std::wstring& name) {
 
